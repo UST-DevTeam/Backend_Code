@@ -117,6 +117,13 @@ def currentFinancialMonth():
     return currentFinancialMonth
 
 
+def currentYear(): 
+    tz = pytz.timezone("Asia/Kolkata")
+    current_date = datetime.now(tz)
+    current_year = current_date.year
+    return current_year
+
+
 # print(currentFinancialMonth(),'fghjkl;gfghjkl;')
 
 
@@ -262,11 +269,11 @@ def updateattachment():
 
 def ExpenseNonewLogic():
     ExpenseNo2 = "EXP"
-    ExpenseNo2 = f"{ExpenseNo2}/{currentFinancialMonth()}/"
+    ExpenseNo2 = f"{ExpenseNo2}{currentYear()}/"
     # sortById = [{"$sort": {"_id": -1}}]
     counter = database.fileDetail.find_one_and_update({"id": "expenseIdCounter"},{"$inc": {"sequence_value": 1}},return_document=True,upsert=True)
     sequence_value = counter["sequence_value"]
-    sequence_value=str(sequence_value).zfill(6)
+    sequence_value=str(sequence_value).zfill(9)
     ExpenseNo2=ExpenseNo2+str(sequence_value)
     return ExpenseNo2
 
