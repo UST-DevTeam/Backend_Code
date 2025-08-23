@@ -1,1 +1,1 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"roleId":{"$numberInt":"1"}},"name":"roleId_1"}],"uuid":"1b0c2fde1a6545c8a71a00f2025cafed","collectionName":"uamManagement","type":"collection"}
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"48c3dd09c9914910bb828ac9ace5e5f0","collectionName":"uamManagement","type":"collection"}
