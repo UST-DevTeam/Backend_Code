@@ -3816,6 +3816,10 @@ def approvalStatus(current_user, id=None):
             for i in data["data"]:
                 if 'ApprovedAmount' in i:
                     if (i["ApprovedAmount"] == None or i["ApprovedAmount"] == "undefined" or i["ApprovedAmount"] == 0):
+                        # if data["customisedStatus"] in [2, 1, 4, 6]:
+                        #     i["ApprovedAmount"] = int(i["Amount"])
+                        # else:
+                        #     i["ApprovedAmount"] = 0
                         if data["customisedStatus"] not in [3,5,7]:
                             return respond(
                                     {

@@ -1505,7 +1505,6 @@ def getActualMonthsQuery(months, year):
     }     
 
 @sample_blueprint.route("/export/vendor-project-tracking",methods=['GET'])
-
 @token_required
 def vendor_project_tracking_export(current_user):
     taskStatus = ["Open", "In Process", "Submit", "Approve", "Reject","Submit to Airtel", "Closed"]
@@ -2715,12 +2714,12 @@ def export_dataRange():
                 }, 
                 'startDate': {
                     '$dateFromString': {
-                        'dateString': '2025-06-26'
+                        'dateString': '2025-07-26'
                     }
                 }, 
                 'endDate': {
                     '$dateFromString': {
-                        'dateString': '2025-07-25T05:30:00.000+00:00'
+                        'dateString': '2025-08-23T05:30:00.000+00:00'
                     }
                 }
             }
@@ -3087,32 +3086,32 @@ def export_dataRange():
 
 
 
-        invoiceArra = [
-            {
-                '$match': {
-                    'siteId': {
-                        '$in': siteuidArra
-                    }
-                }
-            }, {
-                '$project': {
-                    "siteuid":'$siteId',  
-                    'Item Code': '$itemCode', 
-                    'Billing Status': '$status', 
-                    '_id': 0
-                }
-            }
-        ]
-        response = cmo.finding_aggregate("invoice",invoiceArra)
-        invoicedf = pd.DataFrame.from_dict(response['data'])
-        if not invoicedf.empty:
-            invoicedf = invoicedf.groupby('siteuid').agg(lambda x: ', '.join(x.astype(str))).reset_index()
-            invoicedf['Billing Status'] = invoicedf['Billing Status'].apply(lambda x: x.split(',')[-1].strip())
+        # invoiceArra = [
+        #     {
+        #         '$match': {
+        #             'siteId': {
+        #                 '$in': siteuidArra
+        #             }
+        #         }
+        #     }, {
+        #         '$project': {
+        #             "siteuid":'$siteId',  
+        #             'Item Code': '$itemCode', 
+        #             'Billing Status': '$status', 
+        #             '_id': 0
+        #         }
+        #     }
+        # ]
+        # response = cmo.finding_aggregate("invoice",invoiceArra)
+        # invoicedf = pd.DataFrame.from_dict(response['data'])
+        # if not invoicedf.empty:
+        #     invoicedf = invoicedf.groupby('siteuid').agg(lambda x: ', '.join(x.astype(str))).reset_index()
+        #     invoicedf['Billing Status'] = invoicedf['Billing Status'].apply(lambda x: x.split(',')[-1].strip())
             
-            invoicedf = invoicedf.groupby('siteuid').agg(lambda x: ', '.join(map(str, x))).reset_index()
-            invoicedf['Billing Status'] = invoicedf.groupby('siteuid')['Billing Status'].apply(lambda x: x.iloc[-1]).reset_index(drop=True)
+        #     invoicedf = invoicedf.groupby('siteuid').agg(lambda x: ', '.join(map(str, x))).reset_index()
+        #     invoicedf['Billing Status'] = invoicedf.groupby('siteuid')['Billing Status'].apply(lambda x: x.iloc[-1]).reset_index(drop=True)
 
-            mergedDF = mergedDF.merge(invoicedf,on="siteuid",how="left")
+        #     mergedDF = mergedDF.merge(invoicedf,on="siteuid",how="left")
 
 
         columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date",'Task Name',"Task Owner","Start Date","Due Date","MS Completion Date","Task Closure","Custom Status","Item Code","Billing Status"]
@@ -3422,45 +3421,45 @@ def export_fullDump():
 
 
 
-def apnafunction():
-    explist = [
-        {"ExpenseNo": "EXP2025000059765", "UniqueId": "688c7a326bb7683412ce141f"},
-        {"ExpenseNo": "EXP2025000059766", "UniqueId": "688c7b476bb7683412ce1422"},
-        {"ExpenseNo": "EXP2025000059769", "UniqueId": "688cae5d6bb7683412ce14d7"},
-        {"ExpenseNo": "EXP2025000059770", "UniqueId": "688d7c056bb7683412ce16fd"},
-        {"ExpenseNo": "EXP2025000059771", "UniqueId": "688f8c86ff2e213f8fc3a09a"},
-        {"ExpenseNo": "EXP2025000059772", "UniqueId": "689068b4ff2e213f8fc3a69e"},
-        {"ExpenseNo": "EXP2025000059773", "UniqueId": "689086a0ff2e213f8fc3aa23"},
-        {"ExpenseNo": "EXP2025000059774", "UniqueId": "6890d6a7e964f9bd3cf3c29e"},
-        {"ExpenseNo": "EXP2025000059775", "UniqueId": "68919e75e964f9bd3cf3c6d4"},
-        {"ExpenseNo": "EXP2025000059776", "UniqueId": "6891b3d0e964f9bd3cf3cd65"},
-        {"ExpenseNo": "EXP2025000059777", "UniqueId": "6891bfbde964f9bd3cf3cea0"},
-        {"ExpenseNo": "EXP2025000059778", "UniqueId": "68920909e964f9bd3cf3dd05"},
-        {"ExpenseNo": "EXP2025000059779", "UniqueId": "689209a2e964f9bd3cf3dd07"},
-        {"ExpenseNo": "EXP2025000059780", "UniqueId": "68920be3e964f9bd3cf3dd0b"},
-        {"ExpenseNo": "EXP2025000059781", "UniqueId": "68920ce5e964f9bd3cf3dd0e"},
-        {"ExpenseNo": "EXP2025000059782", "UniqueId": "68920daae964f9bd3cf3dd11"},
-        {"ExpenseNo": "EXP2025000059783", "UniqueId": "68920e9ce964f9bd3cf3dd14"},
-        {"ExpenseNo": "EXP2025000059784", "UniqueId": "68920f43e964f9bd3cf3dd17"},
-        {"ExpenseNo": "EXP2025000059785", "UniqueId": "68920fbce964f9bd3cf3dd1a"},
-        {"ExpenseNo": "EXP2025000059786", "UniqueId": "68921099e964f9bd3cf3dd1d"},
-        {"ExpenseNo": "EXP2025000059787", "UniqueId": "68921165e964f9bd3cf3dd20"},
-        {"ExpenseNo": "EXP2025000059788", "UniqueId": "689211f7e964f9bd3cf3dd23"},
-        {"ExpenseNo": "EXP2025000059789", "UniqueId": "6892135fe964f9bd3cf3dd26"},
-        {"ExpenseNo": "EXP2025000059790", "UniqueId": "6892141ae964f9bd3cf3dd29"},
-        {"ExpenseNo": "EXP2025000059791", "UniqueId": "689214e7e964f9bd3cf3dd2c"},
-        {"ExpenseNo": "EXP2025000059792", "UniqueId": "68921571e964f9bd3cf3dd2f"},
-        {"ExpenseNo": "EXP2025000059793", "UniqueId": "689215ede964f9bd3cf3dd32"},
-        {"ExpenseNo": "EXP2025000059794", "UniqueId": "689216b6e964f9bd3cf3dd35"},
-        {"ExpenseNo": "EXP2025000059795", "UniqueId": "689217f7e964f9bd3cf3dd38"},
-        {"ExpenseNo": "EXP2025000059796", "UniqueId": "689218cfe964f9bd3cf3dd3b"},
-        {"ExpenseNo": "EXP2025000059797", "UniqueId": "689219bde964f9bd3cf3dd3e"},
-        {"ExpenseNo": "EXP2025000059799", "UniqueId": "68922d1be964f9bd3cf3dd43"},
-        {"ExpenseNo": "EXP2025000059800", "UniqueId": "6892350088b37699afe08c2e"},
-        {"ExpenseNo": "EXP2025000059801", "UniqueId": "689236a8a6c4c2958c6cddc3"}
-    ]
-    for item in explist:
-        cmo.updating("Expenses",{'_id':ObjectId(item['UniqueId'])},{'ExpenseNo':item['ExpenseNo']},False)
-        print("====Complete====")
+# def apnafunction():
+#     explist = [
+#         {"ExpenseNo": "EXP2025000059765", "UniqueId": "688c7a326bb7683412ce141f"},
+#         {"ExpenseNo": "EXP2025000059766", "UniqueId": "688c7b476bb7683412ce1422"},
+#         {"ExpenseNo": "EXP2025000059769", "UniqueId": "688cae5d6bb7683412ce14d7"},
+#         {"ExpenseNo": "EXP2025000059770", "UniqueId": "688d7c056bb7683412ce16fd"},
+#         {"ExpenseNo": "EXP2025000059771", "UniqueId": "688f8c86ff2e213f8fc3a09a"},
+#         {"ExpenseNo": "EXP2025000059772", "UniqueId": "689068b4ff2e213f8fc3a69e"},
+#         {"ExpenseNo": "EXP2025000059773", "UniqueId": "689086a0ff2e213f8fc3aa23"},
+#         {"ExpenseNo": "EXP2025000059774", "UniqueId": "6890d6a7e964f9bd3cf3c29e"},
+#         {"ExpenseNo": "EXP2025000059775", "UniqueId": "68919e75e964f9bd3cf3c6d4"},
+#         {"ExpenseNo": "EXP2025000059776", "UniqueId": "6891b3d0e964f9bd3cf3cd65"},
+#         {"ExpenseNo": "EXP2025000059777", "UniqueId": "6891bfbde964f9bd3cf3cea0"},
+#         {"ExpenseNo": "EXP2025000059778", "UniqueId": "68920909e964f9bd3cf3dd05"},
+#         {"ExpenseNo": "EXP2025000059779", "UniqueId": "689209a2e964f9bd3cf3dd07"},
+#         {"ExpenseNo": "EXP2025000059780", "UniqueId": "68920be3e964f9bd3cf3dd0b"},
+#         {"ExpenseNo": "EXP2025000059781", "UniqueId": "68920ce5e964f9bd3cf3dd0e"},
+#         {"ExpenseNo": "EXP2025000059782", "UniqueId": "68920daae964f9bd3cf3dd11"},
+#         {"ExpenseNo": "EXP2025000059783", "UniqueId": "68920e9ce964f9bd3cf3dd14"},
+#         {"ExpenseNo": "EXP2025000059784", "UniqueId": "68920f43e964f9bd3cf3dd17"},
+#         {"ExpenseNo": "EXP2025000059785", "UniqueId": "68920fbce964f9bd3cf3dd1a"},
+#         {"ExpenseNo": "EXP2025000059786", "UniqueId": "68921099e964f9bd3cf3dd1d"},
+#         {"ExpenseNo": "EXP2025000059787", "UniqueId": "68921165e964f9bd3cf3dd20"},
+#         {"ExpenseNo": "EXP2025000059788", "UniqueId": "689211f7e964f9bd3cf3dd23"},
+#         {"ExpenseNo": "EXP2025000059789", "UniqueId": "6892135fe964f9bd3cf3dd26"},
+#         {"ExpenseNo": "EXP2025000059790", "UniqueId": "6892141ae964f9bd3cf3dd29"},
+#         {"ExpenseNo": "EXP2025000059791", "UniqueId": "689214e7e964f9bd3cf3dd2c"},
+#         {"ExpenseNo": "EXP2025000059792", "UniqueId": "68921571e964f9bd3cf3dd2f"},
+#         {"ExpenseNo": "EXP2025000059793", "UniqueId": "689215ede964f9bd3cf3dd32"},
+#         {"ExpenseNo": "EXP2025000059794", "UniqueId": "689216b6e964f9bd3cf3dd35"},
+#         {"ExpenseNo": "EXP2025000059795", "UniqueId": "689217f7e964f9bd3cf3dd38"},
+#         {"ExpenseNo": "EXP2025000059796", "UniqueId": "689218cfe964f9bd3cf3dd3b"},
+#         {"ExpenseNo": "EXP2025000059797", "UniqueId": "689219bde964f9bd3cf3dd3e"},
+#         {"ExpenseNo": "EXP2025000059799", "UniqueId": "68922d1be964f9bd3cf3dd43"},
+#         {"ExpenseNo": "EXP2025000059800", "UniqueId": "6892350088b37699afe08c2e"},
+#         {"ExpenseNo": "EXP2025000059801", "UniqueId": "689236a8a6c4c2958c6cddc3"}
+#     ]
+#     for item in explist:
+#         cmo.updating("Expenses",{'_id':ObjectId(item['UniqueId'])},{'ExpenseNo':item['ExpenseNo']},False)
+#         print("====Complete====")
 
 

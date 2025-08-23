@@ -7108,6 +7108,54 @@ def mobilecloseMilestone(current_user, id=None):
     closedData = dict(data)
     resp = {}
     tkn = False
+
+    if "CC_" in closedData and closedData['CC_'] == "Forms & Checklist":
+        arra = [
+            {
+                '$match': {
+                    '_id': ObjectId(id)
+                }
+            }, {
+                '$addFields': {
+                    'SubProjectId': {
+                        '$toObjectId': '$SubProjectId'
+                    }
+                }
+            }, {
+                '$lookup': {
+                    'from': 'projectType', 
+                    'localField': 'SubProjectId', 
+                    'foreignField': '_id', 
+                    'as': 'result'
+                }
+            }, {
+                '$project': {
+                    'siteuid': {
+                        '$toString': '$siteId'
+                    }, 
+                    'mName': '$Name', 
+                    'projectTypeName': {
+                        '$arrayElemAt': [
+                            '$result.projectType', 0
+                        ]
+                    }, 
+                    'subProjectTypeName': {
+                        '$arrayElemAt': [
+                            '$result.subProject', 0
+                        ]
+                    }, 
+                    '_id': 0
+                }
+            }
+        ]
+        response = cmo.finding_aggregate("milestone",arra)['data']
+        if response:
+            response = response[0]
+            closedData['Checklist'] == "Yes"
+            closedData['siteuid'] == response['siteuid']
+            closedData['mName'] == response['mName']
+            closedData['projectTypeName'] == response['projectTypeName']
+            closedData['subProjectTypeName'] == response['subProjectTypeName']
     
     
     globalSaverId=None

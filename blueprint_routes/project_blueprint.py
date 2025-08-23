@@ -7,6 +7,7 @@ from blueprint_routes.currentuser_blueprint import projectId_str
 from common.config import is_valid_mongodb_objectid as is_valid_mongodb_objectid
 from common.mongo_operations import db as database
 import zipfile, io, os
+
 def current_time():
     utc_now = datetime.datetime.utcnow()
     asia_timezone = pytz.timezone("Asia/Kolkata")
@@ -21,6 +22,14 @@ def current_time1():
     asia_now = utc_now.replace(tzinfo=pytz.utc).astimezone(asia_timezone)
     current_date = asia_now.strftime("%d-%m-%Y")
     return current_date
+
+def new_current_time():
+    # utc_now = datetime.datetime.utcnow()
+    # asia_timezone = pytz.timezone("Asia/Kolkata")
+    # asia_now = utc_now.replace(tzinfo=pytz.utc).astimezone(asia_timezone)
+    # current_date = asia_now.strftime("%d-%m-%Y")
+    current_time = datetime.datetime.now().strftime("%m-%d-%Y")
+    return current_time
 
 
 project_blueprint = Blueprint("project_blueprint", __name__)
@@ -313,8 +322,8 @@ def trackingdata(uniqueId=None):
             return respond(Response)
 
 
-@project_blueprint.route("/siteEngineer", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
-@project_blueprint.route("/siteEngineer/<uniqueId>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+@project_blueprint.route("/siteEngineer", methods=["GET", "POST","DELETE"])
+@project_blueprint.route("/siteEngineer/<uniqueId>", methods=["GET", "POST","DELETE"])
 @token_required
 def siteengineer(current_user,uniqueId=None):
     
@@ -344,7 +353,7 @@ def siteengineer(current_user,uniqueId=None):
                 arra = arra + [
                     {
                         '$match':{
-                            'Site Id':{
+                            'FA Code':{
                                 '$regex':request.args.get('siteId').strip(),
                                 '$options': 'i'
                             }
@@ -374,95 +383,97 @@ def siteengineer(current_user,uniqueId=None):
                         'SubProjectId': {
                             '$toObjectId': '$SubProjectId'
                         }, 
-                        'Site_Completion Date1': {
-                            '$cond': {
-                                'if': {
-                                    '$or': [
-                                        {
-                                            '$eq': [
-                                                '$Site_Completion Date', None
-                                            ]
-                                        }, {
-                                            '$eq': [
-                                                '$Site_Completion Date', ''
-                                            ]
-                                        }
-                                    ]
-                                }, 
-                                'then': None, 
-                                'else': {
-                                    '$toDate': '$Site_Completion Date'
-                                }
-                            }
-                        }, 
-                        'siteEndDate1': {
-                            '$cond': {
-                                'if': {
-                                    '$or': [
-                                        {
-                                            '$eq': [
-                                                '$siteEndDate', None
-                                            ]
-                                        }, {
-                                            '$eq': [
-                                                '$siteEndDate', ''
-                                            ]
-                                        }
-                                    ]
-                                }, 
-                                'then': None, 
-                                'else': {
-                                    '$toDate': '$siteEndDate'
-                                }
-                            }
-                        }
+                        # 'Site_Completion Date1': {
+                        #     '$cond': {
+                        #         'if': {
+                        #             '$or': [
+                        #                 {
+                        #                     '$eq': [
+                        #                         '$Site_Completion Date', None
+                        #                     ]
+                        #                 }, {
+                        #                     '$eq': [
+                        #                         '$Site_Completion Date', ''
+                        #                     ]
+                        #                 }
+                        #             ]
+                        #         }, 
+                        #         'then': None, 
+                        #         'else': {
+                        #             '$toDate': '$Site_Completion Date'
+                        #         }
+                        #     }
+                        # }, 
+                        # 'siteEndDate1': {
+                        #     '$cond': {
+                        #         'if': {
+                        #             '$or': [
+                        #                 {
+                        #                     '$eq': [
+                        #                         '$siteEndDate', None
+                        #                     ]
+                        #                 }, {
+                        #                     '$eq': [
+                        #                         '$siteEndDate', ''
+                        #                     ]
+                        #                 }
+                        #             ]
+                        #         }, 
+                        #         'then': None, 
+                        #         'else': {
+                        #             '$toDate': '$siteEndDate'
+                        #         }
+                        #     }
+                        # }
                     }
-                }, {
-                    '$addFields': {
-                        'Site_Completion Date': {
-                            '$cond': {
-                                'if': {
-                                    '$eq': [
-                                        {
-                                            '$type': '$Site_Completion Date1'
-                                        }, 'date'
-                                    ]
-                                }, 
-                                'then': {
-                                    '$dateToString': {
-                                        'date': '$Site_Completion Date1', 
-                                        'format': '%d-%m-%Y', 
-                                        'timezone': 'Asia/Kolkata'
-                                    }
-                                }, 
-                                'else': ''
-                            }
-                        }, 
-                        'siteageing': {
-                            '$cond': {
-                                'if': {
-                                    '$eq': [
-                                        {
-                                            '$type': '$Site_Completion Date1'
-                                        }, 'date'
-                                    ]
-                                }, 
-                                'then': {
-                                    '$round': {
-                                        '$divide': [
-                                            {
-                                                '$subtract': [
-                                                    '$siteEndDate1', '$Site_Completion Date1'
-                                                ]
-                                            }, 86400000
-                                        ]
-                                    }
-                                }, 
-                                'else': ''
-                            }
-                        }
-                    }
-                }, {
+                }, 
+                # {
+                #     '$addFields': {
+                        # 'Site_Completion Date': {
+                        #     '$cond': {
+                        #         'if': {
+                        #             '$eq': [
+                        #                 {
+                        #                     '$type': '$Site_Completion Date1'
+                        #                 }, 'date'
+                        #             ]
+                        #         }, 
+                        #         'then': {
+                        #             '$dateToString': {
+                        #                 'date': '$Site_Completion Date1', 
+                        #                 'format': '%d-%m-%Y', 
+                        #                 'timezone': 'Asia/Kolkata'
+                        #             }
+                        #         }, 
+                        #         'else': ''
+                        #     }
+                        # }, 
+                        # 'siteageing': {
+                        #     '$cond': {
+                        #         'if': {
+                        #             '$eq': [
+                        #                 {
+                        #                     '$type': '$Site_Completion Date1'
+                        #                 }, 'date'
+                        #             ]
+                        #         }, 
+                        #         'then': {
+                        #             '$round': {
+                        #                 '$divide': [
+                        #                     {
+                        #                         '$subtract': [
+                        #                             '$siteEndDate1', '$Site_Completion Date1'
+                        #                         ]
+                        #                     }, 86400000
+                        #                 ]
+                        #             }
+                        #         }, 
+                        #         'else': ''
+                        #     }
+                        # }
+                    # }
+                # },
+                {
                     '$lookup': {
                         'from': 'milestone', 
                         'localField': '_id', 
@@ -485,12 +496,12 @@ def siteengineer(current_user,uniqueId=None):
                                     'uniqueId': {
                                         '$toString': '$_id'
                                     }, 
-                                    'mileStoneStartDate1': {
-                                        '$toDate': '$mileStoneStartDate'
-                                    }, 
-                                    'mileStoneEndtDate1': {
-                                        '$toDate': '$mileStoneEndDate'
-                                    }, 
+                                    # 'mileStoneStartDate1': {
+                                    #     '$toDate': '$mileStoneStartDate'
+                                    # }, 
+                                    # 'mileStoneEndtDate1': {
+                                    #     '$toDate': '$mileStoneEndDate'
+                                    # }, 
                                     'CC_Completion Date1': {
                                         '$cond': {
                                             'if': {
@@ -511,7 +522,13 @@ def siteengineer(current_user,uniqueId=None):
                                                 '$toDate': '$CC_Completion Date'
                                             }
                                         }
-                                    }
+                                    },
+                                    'assignDate': {
+                                        '$dateFromString': {
+                                            'dateString': '$assignDate', 
+                                            'format': '%m-%d-%Y', 
+                                        }
+                                    },
                                 }
                             }, {
                                 '$addFields': {
@@ -527,28 +544,56 @@ def siteengineer(current_user,uniqueId=None):
                                             'then': {
                                                 '$dateToString': {
                                                     'date': '$CC_Completion Date1', 
-                                                    'format': '%d-%m-%Y', 
-                                                    'timezone': 'Asia/Kolkata'
+                                                    'format': '%m-%d-%Y', 
                                                 }
                                             }, 
                                             'else': ''
                                         }
                                     }, 
+                                    # 'taskageing': {
+                                    #     '$cond': {
+                                    #         'if': {
+                                    #             '$eq': [
+                                    #                 {
+                                    #                     '$type': '$CC_Completion Date1'
+                                    #                 }, 'date'
+                                    #             ]
+                                    #         }, 
+                                    #         'then': {
+                                    #             '$round': {
+                                    #                 '$divide': [
+                                    #                     {
+                                    #                         '$subtract': [
+                                    #                             '$mileStoneEndtDate1', '$CC_Completion Date1'
+                                    #                         ]
+                                    #                     }, 86400000
+                                    #                 ]
+                                    #             }
+                                    #         }, 
+                                    #         'else': {
+                                    #             '$round': {
+                                    #                 '$divide': [
+                                    #                     {
+                                    #                         '$subtract': [
+                                    #                             '$mileStoneEndtDate1', '$$NOW'
+                                    #                         ]
+                                    #                     }, 86400000
+                                    #                 ]
+                                    #             }
+                                    #         }
+                                    #     }
+                                    # }, 
                                     'taskageing': {
                                         '$cond': {
                                             'if': {
-                                                '$eq': [
-                                                    {
-                                                        '$type': '$CC_Completion Date1'
-                                                    }, 'date'
-                                                ]
+                                                '$eq': ["$mileStoneStatus","Closed"]
                                             }, 
                                             'then': {
                                                 '$round': {
                                                     '$divide': [
                                                         {
                                                             '$subtract': [
-                                                                '$mileStoneEndtDate1', '$CC_Completion Date1'
+                                                                '$CC_Completion Date1',"$assignDate"
                                                             ]
                                                         }, 86400000
                                                     ]
@@ -559,32 +604,38 @@ def siteengineer(current_user,uniqueId=None):
                                                     '$divide': [
                                                         {
                                                             '$subtract': [
-                                                                '$mileStoneEndtDate1', '$$NOW'
+                                                                '$$NOW',"$assignDate"
                                                             ]
                                                         }, 86400000
                                                     ]
                                                 }
                                             }
                                         }
-                                    }, 
-                                    'mileStoneStartDate': {
-                                        '$dateToString': {
-                                            'date': {
-                                                '$toDate': '$mileStoneStartDate'
-                                            }, 
-                                            'format': '%d-%m-%Y', 
-                                            'timezone': 'Asia/Kolkata'
+                                    },
+                                    "assignDate":{
+                                        '$dateToString':{
+                                            'date':"$assignDate",
+                                            'format': '%m-%d-%Y'
                                         }
-                                    }, 
-                                    'mileStoneEndDate': {
-                                        '$dateToString': {
-                                            'date': {
-                                                '$toDate': '$mileStoneEndDate'
-                                            }, 
-                                            'format': '%d-%m-%Y', 
-                                            'timezone': 'Asia/Kolkata'
-                                        }
-                                    }
+                                    } 
+                                    # 'mileStoneStartDate': {
+                                    #     '$dateToString': {
+                                    #         'date': {
+                                    #             '$toDate': '$mileStoneStartDate'
+                                    #         }, 
+                                    #         'format': '%d-%m-%Y', 
+                                    #         'timezone': 'Asia/Kolkata'
+                                    #     }
+                                    # }, 
+                                    # 'mileStoneEndDate': {
+                                    #     '$dateToString': {
+                                    #         'date': {
+                                    #             '$toDate': '$mileStoneEndDate'
+                                    #         }, 
+                                    #         'format': '%d-%m-%Y', 
+                                    #         'timezone': 'Asia/Kolkata'
+                                    #     }
+                                    # }
                                 }
                             }, {
                                 '$lookup': {
@@ -710,20 +761,20 @@ def siteengineer(current_user,uniqueId=None):
                         "siteId": "$siteid",
                         "projectuniqueId": {"$toString": "$projectuniqueId"},
                         "uniqueId": "$_id",
-                        "siteStartDate": {
-                            "$dateToString": {
-                                "date": {"$toDate": "$siteStartDate"},
-                                "format": "%d-%m-%Y",
-                                "timezone": "Asia/Kolkata",
-                            }
-                        },
-                        "siteEndDate": {
-                            "$dateToString": {
-                                "date": {"$toDate": "$siteEndDate"},
-                                "format": "%d-%m-%Y",
-                                "timezone": "Asia/Kolkata",
-                            }
-                        },
+                        # "siteStartDate": {
+                        #     "$dateToString": {
+                        #         "date": {"$toDate": "$siteStartDate"},
+                        #         "format": "%d-%m-%Y",
+                        #         "timezone": "Asia/Kolkata",
+                        #     }
+                        # },
+                        # "siteEndDate": {
+                        #     "$dateToString": {
+                        #         "date": {"$toDate": "$siteEndDate"},
+                        #         "format": "%d-%m-%Y",
+                        #         "timezone": "Asia/Kolkata",
+                        #     }
+                        # },
                     }
                 }, {
                     "$project": {
@@ -1163,10 +1214,12 @@ def Task_allocation_mail(assigningTo,uid,finalData):
 def form_changer(text):
     return str(text)
 
-@project_blueprint.route("/globalSaver", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
-@project_blueprint.route("/globalSaver/<uniqueId>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+@project_blueprint.route("/globalSaver", methods=["POST", "PATCH"])
+@project_blueprint.route("/globalSaver/<uniqueId>", methods=["POST", "PATCH"])
 @token_required
 def globalSaver(current_user,uniqueId=None):
+
+
     if request.method == "POST":
         allData = request.get_json()
        
@@ -1174,12 +1227,14 @@ def globalSaver(current_user,uniqueId=None):
             response = {
                 "status": 400,
                 "icon": "error",
-                "msg": "Please Add Site Id and Milestone",
+                "msg": "Please Add FA Code and Milestone",
             }
             return respond(response)
+        
         if len(list(allData["siteEngineer"].keys())) == 0:
-            response = {"status": 400, "icon": "error", "msg": "Please Add Site id"}
+            response = {"status": 400, "icon": "error", "msg": "Please Add FA Code"}
             return respond(response)
+        
         if len(list(allData["mileStone"].keys())) == 0:
             response = {
                 "status": 400,
@@ -1187,221 +1242,169 @@ def globalSaver(current_user,uniqueId=None):
                 "msg": "Please Add at least one Milestone",
             }
             return respond(response)
-        fields_to_check = ["PARENT PROJECT ID", "SSID", "Site Id","RECTIFICATION PLAN DATE"]
-        if all(field in allData["siteEngineer"] for field in fields_to_check):
-            allData["siteEngineer"]['RFAI Date'] = allData["siteEngineer"]['RECTIFICATION PLAN DATE']
-            arra = [
-                {
-                    '$match':{
-                        'systemId':allData["siteEngineer"]['SSID']
-                    }
-                },
-            ]
-            Data = cmo.finding_aggregate("SiteEngineer",arra)['data']
-            if len(Data):
-                if Data[0]['Site Id'] == allData["siteEngineer"]['Site Id']:
-                    arra = [
-                        {
-                            '$match':{
-                                'projectuniqueId':Data[0]['projectuniqueId']
-                            }
-                        }, {
-                            '$addFields':{
-                                'projectuniqueId':{
-                                    '$toObjectId':'$projectuniqueId'
-                                }
-                            }
-                        }, {
-                            '$lookup': {
-                                'from': 'project', 
-                                'localField': 'projectuniqueId', 
-                                'foreignField': '_id', 
-                                'as': 'result'
-                            }
-                        }, {
-                            '$addFields': {
-                                'projectId': {
-                                    '$arrayElemAt': [
-                                        '$result.projectId', 0
-                                    ]
-                                }
-                            }
-                        }
-                    ]
-                    projectId = cmo.finding_aggregate("SiteEngineer",arra)['data'][0]['projectId']
-                    if projectId != allData["siteEngineer"]['PARENT PROJECT ID']:
-                        return respond({
-                            'status':400,
-                            "icon":'error',
-                            "msg":"PARENT PROJECT ID and SSID Pair is not found in Database..."
-                        })
-                else:
-                    return respond({
-                        'status':400,
-                        'icon':'error',
-                        "msg":"SSID And Site Id Pair is not found in Database..."
-                    })
-                
-            else:
-                return respond({
-                    'status':400,
-                    "icon":"error",
-                    "msg":'SSID not found in the Database. Please provide the correct SSID'
-                })
+        
         siteEngineerAllData = {
             **allData["siteEngineer"],
-            **allData["t_issues"],
+            # **allData["t_issues"],
             **allData["t_tracking"],
-            **allData["t_sFinancials"],
+            # **allData["t_sFinancials"],
         }
-        finaler = ctm.datetimeObj()
 
-        rfaidateandallocationdate = 0
-        cond = True
-        if "RFAI Date" in siteEngineerAllData and cond:
-            if siteEngineerAllData["RFAI Date"] != None:
-                finaler = ctm.strtodate(siteEngineerAllData["RFAI Date"])
-                rfaidateandallocationdate = rfaidateandallocationdate + 1
-                cond = False
-        if "ALLOCATION DATE" in siteEngineerAllData and cond:
-            if 'RFAI Date' not in siteEngineerAllData and siteEngineerAllData['ALLOCATION DATE'] not in ['',None,'undefined']:
-                siteEngineerAllData['RFAI Date'] = siteEngineerAllData['ALLOCATION DATE']
-                if siteEngineerAllData["RFAI Date"] != None:
-                    finaler = ctm.strtodate(siteEngineerAllData["ALLOCATION DATE"])
-                    rfaidateandallocationdate = rfaidateandallocationdate + 1
-                    cond = False
+        # finaler = ctm.datetimeObj()
+
+        # rfaidateandallocationdate = 0
+        # cond = True
+
+        # if "RFAI Date" in siteEngineerAllData and cond:
+        #     if siteEngineerAllData["RFAI Date"] != None:
+        #         finaler = ctm.strtodate(siteEngineerAllData["RFAI Date"])
+        #         rfaidateandallocationdate = rfaidateandallocationdate + 1
+        #         cond = False
+
+        # if "ALLOCATION DATE" in siteEngineerAllData and cond:
+        #     if 'RFAI Date' not in siteEngineerAllData and siteEngineerAllData['ALLOCATION DATE'] not in ['',None,'undefined']:
+        #         siteEngineerAllData['RFAI Date'] = siteEngineerAllData['ALLOCATION DATE']
+        #         if siteEngineerAllData["RFAI Date"] != None:
+        #             finaler = ctm.strtodate(siteEngineerAllData["ALLOCATION DATE"])
+        #             rfaidateandallocationdate = rfaidateandallocationdate + 1
+        #             cond = False
             
-        if rfaidateandallocationdate == 0:
-            return respond(
-                {
-                    "status": 400,
-                    "icon": "error",
-                    "msg": f"Please provide at least one RFAI Date or Site Allocation Date ",
-                }
-            )
+        # if rfaidateandallocationdate == 0:
+        #     return respond(
+        #         {
+        #             "status": 400,
+        #             "icon": "error",
+        #             "msg": f"Please provide at least one RFAI Date or Site Allocation Date ",
+        #         }
+        #     )
         
         
-        arra = [
-            {"$match": {"_id": ObjectId(siteEngineerAllData["SubProjectId"])}},
-            {
-                "$project": {
-                    "concatenatedArray": {
-                        "$concatArrays": [
-                            {
-                                "$cond": {
-                                    "if": {"$isArray": "$t_sengg"},
-                                    "then": "$t_sengg",
-                                    "else": [],
-                                }
-                            }
-                        ]
-                    },
-                    "custId":1,
-                }
-            }, {
-                "$unwind": {
-                    "path": "$concatenatedArray",
-                    "preserveNullAndEmptyArrays": True,
-                }
-            }, {
-                '$addFields': {
-                    'concatenatedArray.custId': '$custId'
-                }
-            }, {
-                "$replaceRoot": {
-                    "newRoot": "$concatenatedArray"
-                }
-            }, {
-                "$match": {
-                    "dataType": "Auto Created",
-                    "fieldName":'Unique ID'
-                }
-            }
-        ]
-        response = cmo.finding_aggregate("projectType", arra)["data"]
+        # arra = [
+        #     {"$match": {"_id": ObjectId(siteEngineerAllData["SubProjectId"])}},
+        #     {
+        #         "$project": {
+        #             "concatenatedArray": {
+        #                 "$concatArrays": [
+        #                     {
+        #                         "$cond": {
+        #                             "if": {"$isArray": "$t_sengg"},
+        #                             "then": "$t_sengg",
+        #                             "else": [],
+        #                         }
+        #                     }
+        #                 ]
+        #             },
+        #             "custId":1,
+        #         }
+        #     }, {
+        #         "$unwind": {
+        #             "path": "$concatenatedArray",
+        #             "preserveNullAndEmptyArrays": True,
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'concatenatedArray.custId': '$custId'
+        #         }
+        #     }, {
+        #         "$replaceRoot": {
+        #             "newRoot": "$concatenatedArray"
+        #         }
+        #     }, {
+        #         "$match": {
+        #             "dataType": "Auto Created",
+        #             "fieldName":'Unique ID'
+        #         }
+        #     }
+        # ]
+        # response = cmo.finding_aggregate("projectType", arra)["data"]
 
-        if len(response)>0:
+        # if len(response)>0:
 
-            try:
-                for i in response:
-                        valeGame = []
-                        for j in i["dropdownValue"].split(","):
-                            valeGame.append(siteEngineerAllData[form_changer(j)])
-                        siteEngineerAllData[form_changer(i["fieldName"])] = "-".join(valeGame)
-            except:
-                return respond({
-                    'icon':'error',
-                    "status":400,
-                    "msg":"Please check Unique ID Combination, May be Some filed not found"
-                })
-        else:
-            return respond({
-                'status':400,
-                "icon":"error",
-                "msg":'Unique ID is not Define in Template for this Project Sub Type'
-            })
-        if "Unique ID" in siteEngineerAllData:
-            arra = [
-                {
-                    '$match':{"Unique ID": siteEngineerAllData["Unique ID"]}
-                }
-            ]
+        #     try:
+        #         for i in response:
+        #                 valeGame = []
+        #                 for j in i["dropdownValue"].split(","):
+        #                     valeGame.append(siteEngineerAllData[form_changer(j)])
+        #                 siteEngineerAllData[form_changer(i["fieldName"])] = "-".join(valeGame)
+        #     except:
+        #         return respond({
+        #             'icon':'error',
+        #             "status":400,
+        #             "msg":"Please check Unique ID Combination, May be Some filed not found"
+        #         })
+        # else:
+        #     return respond({
+        #         'status':400,
+        #         "icon":"error",
+        #         "msg":'Unique ID is not Define in Template for this Project Sub Type'
+        #     })
+        # if "Unique ID" in siteEngineerAllData:
+        #     arra = [
+        #         {
+        #             '$match':{"Unique ID": siteEngineerAllData["Unique ID"]}
+        #         }
+        #     ]
 
-            dalenta = cmo.finding_aggregate("SiteEngineer",arra)["data"]
-            if len(dalenta) > 0:
-                return respond(
-                    {
-                        "status": 400,
-                        "msg": f"This Unique ID '{siteEngineerAllData['Unique ID'] }' is already exists.",
-                        "icon":"error"
-                    }
-                )
-        arra = [
-            {
-                '$match':{
-                    '_id':ObjectId(siteEngineerAllData['projectuniqueId'])
-                }
-            }, {
-                '$addFields':{
-                    "projectGroup":{
-                        '$toString':"$projectGroup"
-                    }
-                }
-            }
-        ]
-        fetchProjectData = cmo.finding_aggregate("project",arra)['data']
+        #     dalenta = cmo.finding_aggregate("SiteEngineer",arra)["data"]
+        #     if len(dalenta) > 0:
+        #         return respond(
+        #             {
+        #                 "status": 400,
+        #                 "msg": f"This Unique ID '{siteEngineerAllData['Unique ID'] }' is already exists.",
+        #                 "icon":"error"
+        #             }
+        #         )
+
+        # arra = [
+        #     {
+        #         '$match':{
+        #             '_id':ObjectId(siteEngineerAllData['projectuniqueId'])
+        #         }
+        #     }, {
+        #         '$addFields':{
+        #             "projectGroup":{
+        #                 '$toString':"$projectGroup"
+        #             }
+        #         }
+        #     }
+        # ]
+        # fetchProjectData = cmo.finding_aggregate("project",arra)['data']
             
         siteEngineerAllData["siteBillingStatus"] = "Unbilled"
         siteEngineerAllData["siteStatus"] = "Open"
-        siteEngineerAllData["customerId"] = response[0]['custId']
-        siteEngineerAllData["projectGropupId"] = fetchProjectData[0]['projectGroup']
-        siteEngineerAllData["circleId"] = fetchProjectData[0]['circle']
+        # siteEngineerAllData["customerId"] = response[0]['custId']
         counter = database.fileDetail.find_one_and_update({"id": "systemIdCounter"},{"$inc": {"sequence_value": 1}},return_document=True,upsert=True)
-        sequence_value = counter["sequence_value"]
-        systemId = "SSID" + str(sequence_value).zfill(8)
+        # sequence_value = counter["sequence_value"]
+        # systemId = "SSID" + str(sequence_value).zfill(8)
+        # siteEngineerAllData["systemId"] = systemId
+        systemId = f"SSID{counter['sequence_value']:08d}"
         siteEngineerAllData["systemId"] = systemId
         Response = cmo.insertion("SiteEngineer", siteEngineerAllData)
         uId = Response["operation_id"]
         projectuniqueId = siteEngineerAllData["projectuniqueId"]
-        evl.newSite(uId, current_user["userUniqueId"], projectuniqueId,siteEngineerAllData['Site Id'])
+        evl.newSite(uId, current_user["userUniqueId"], projectuniqueId,"")
+
+
+        # Milestone
+
         newData = copy.deepcopy(allData["mileStone"])
         del newData["data"]
-        finalerEnd = None
-        finalerStart = finaler
+        # finalerEnd = None
+        # finalerStart = finaler
         ind = 0
         milestone = allData["mileStone"]['data']
         for i in milestone:
-            finalerEnd = ctm.add_hour_in_udate(finalerStart, int(i["Estimated Time (Days)"]))
+            # finalerEnd = ctm.add_hour_in_udate(finalerStart, int(i["Estimated Time (Days)"]))
             if "Predecessor" in i:
                 if i["Predecessor"] is None:
                     i["Predecessor"] = ""
             if not  "Predecessor" in i:
                     i["Predecessor"] = ""
-            finalerEnd = ctm.add_hour_in_udate(finalerStart, int(i["Estimated Time (Days)"]))
+            # finalerEnd = ctm.add_hour_in_udate(finalerStart, int(i["Estimated Time (Days)"]))
             dataInsert = {
                 "Name": i["Name"],
                 "Estimated Time (Days)": i["Estimated Time (Days)"],
-                "WCC Sign Off": i["WCC Sign off"],
+                # "WCC Sign Off": i["WCC Sign off"],
                 "Predecessor": i["Predecessor"],
                 "Completion Criteria": i["Completion Criteria"],
                 "SubProjectId": allData["mileStone"]["SubProjectId"],
@@ -1410,139 +1413,138 @@ def globalSaver(current_user,uniqueId=None):
                 "systemId": systemId,
                 "estimateDay": int(i["Estimated Time (Days)"]),
                 "mileStoneStatus": "Open",
-                "mileStoneStartDate": finalerStart.strftime("%Y-%m-%d")+"T00:00:00",
-                "mileStoneEndDate": finalerEnd.strftime("%Y-%m-%d")+"T00:00:00",
-                "addedAt": current_time(),
-                "customerId":response[0]['custId'],
-                "projectGropupId":fetchProjectData[0]['projectGroup'],
-                "circleId":fetchProjectData[0]['circle']
+                # "mileStoneStartDate": finalerStart.strftime("%Y-%m-%d")+"T00:00:00",
+                # "mileStoneEndDate": finalerEnd.strftime("%Y-%m-%d")+"T00:00:00",
+                "addedAt": new_current_time(),
+                # "customerId":response[0]['custId'],
+                # "projectGropupId":fetchProjectData[0]['projectGroup'],
+                # "circleId":fetchProjectData[0]['circle']
             }
-            if ind == 0:
-                dataInsert["Predecessor"] = ""
+            # if ind == 0:
+            #     dataInsert["Predecessor"] = ""
             Response = cmo.insertion("milestone", dataInsert)
             evl.newMileStone(Response['operation_id'],current_user['userUniqueId'],allData["mileStone"]["projectuniqueId"],i["Name"],uId,msg="New MileStone Created")
-            finalerStart = finalerEnd
-            ind = ind + 1
-        upby = {"_id": ObjectId(uId)}
-        upAt = {
-            "siteStartDate": finaler.strftime("%Y-%m-%d")+"T00:00:00",
-            "siteEndDate": finalerEnd.strftime("%Y-%m-%d")+"T00:00:00",
-        }
-        cmo.updating("SiteEngineer", upby, upAt, False)
-        return respond(Response)
+            # finalerStart = finalerEnd
+            # ind = ind + 1
+        # upby = {"_id": ObjectId(uId)}
+        # upAt = {
+        #     "siteStartDate": finaler.strftime("%Y-%m-%d")+"T00:00:00",
+        #     "siteEndDate": finalerEnd.strftime("%Y-%m-%d")+"T00:00:00",
+        # }
+        # cmo.updating("SiteEngineer", upby, upAt, False)
+        return respond({
+            'status':201,
+            "icon":"success",
+            "msg":"Data Addedd Successfully"
+        })
 
     if request.method == "PATCH":
         
         allData = request.get_json()
-        
-        uiid = allData["from"]["uid"]
-        useruniqueId = current_user["userUniqueId"]
+
         name = allData["name"]
         uoData = allData["data"]
         uid = allData["from"]["uid"]
+
+
         if name == "updateSiteEngg":
-            # if uiid != None:
-            #     evl.siteEngineerLogs(uiid, allData, useruniqueId, "SiteEngineer")
             updatingData = allData["data"]
             uid = allData["from"]["uid"]
             
-            if (uid!=None and uid!= "undefined"):
-                arra = [
-                    {"$match": {"_id": ObjectId(uid)}},
-                    {"$project": {"_id": 0, "SubProjectId": 1}},
-                ]
-                subprojectid = cmo.finding_aggregate("SiteEngineer", arra)['data']
-                if len(subprojectid):
-                    subprojectid=subprojectid[0]['SubProjectId']
-                    arry = [
-                        {"$match": {"_id": ObjectId(subprojectid)}},
-                        {
-                            "$project": {
-                                "Commercial": 0,
-                                "_id": 0,
-                                "t_tracking": 0,
-                                "t_sFinancials": 0,
-                                "t_issues": 0,
-                                "MileStone": 0,
-                            }
-                        },
-                    ]
-                    datas=cmo.finding_aggregate("projectType",arry)['data']
-                    if len(datas):
-                        for i in datas[0]['t_sengg']:
-                            if i['fieldName']=="Unique ID" and i['dataType']=="Auto Created":
-                                uniqueIdDropDownvalues=i['dropdownValue']
-                                keys = uniqueIdDropDownvalues.split(',')
-                                extracted_values = [updatingData[key] for key in keys if key in updatingData]
-                                extracted_values = [str(element) for element in extracted_values]
-                                changedUniqueId = '-'.join(extracted_values)
-                                updatingData['Unique ID'] = changedUniqueId
-                                if changedUniqueId == "":
-                                    del updatingData['Unique ID']
-                                if changedUniqueId != "":
-                                    arra = [
-                                        {
-                                            '$match':{
-                                                '_id':ObjectId(uid)
-                                            }
-                                        }
-                                    ]
-                                    currentUniqueId = cmo.finding_aggregate("SiteEngineer",arra)['data'][0]['Unique ID']
-                                    if currentUniqueId!=changedUniqueId:
-                                        duplicate = cmo.finding("SiteEngineer",{"Unique ID":changedUniqueId})['data']
-                                        if duplicate:
-                                            duplicateId = duplicate[0]['Unique ID']
-                                            return respond({
-                                                'status':400,
-                                                "msg":f'This Unique Id "{duplicateId}" is already exist in Database',
-                                                "icon":"error"
-                                            })
+            # arra = [
+            #     {"$match": {"_id": ObjectId(uid)}},
+            #     {"$project": {"_id": 0, "SubProjectId": 1}},
+            # ]
+            # subprojectid = cmo.finding_aggregate("SiteEngineer", arra)['data']
+            # if len(subprojectid):
+            #     subprojectid=subprojectid[0]['SubProjectId']
+            #     arry = [
+            #         {"$match": {"_id": ObjectId(subprojectid)}},
+            #         {
+            #             "$project": {
+            #                 "Commercial": 0,
+            #                 "_id": 0,
+            #                 "t_tracking": 0,
+            #                 "t_sFinancials": 0,
+            #                 "t_issues": 0,
+            #                 "MileStone": 0,
+            #             }
+            #         },
+            #     ]
+            #     datas=cmo.finding_aggregate("projectType",arry)['data']
+            #     if len(datas):
+            #         for i in datas[0]['t_sengg']:
+            #             if i['fieldName']=="Unique ID" and i['dataType']=="Auto Created":
+            #                 uniqueIdDropDownvalues=i['dropdownValue']
+            #                 keys = uniqueIdDropDownvalues.split(',')
+            #                 extracted_values = [updatingData[key] for key in keys if key in updatingData]
+            #                 extracted_values = [str(element) for element in extracted_values]
+            #                 changedUniqueId = '-'.join(extracted_values)
+            #                 updatingData['Unique ID'] = changedUniqueId
+            #                 if changedUniqueId == "":
+            #                     del updatingData['Unique ID']
+            #                 if changedUniqueId != "":
+            #                     arra = [
+            #                         {
+            #                             '$match':{
+            #                                 '_id':ObjectId(uid)
+            #                             }
+            #                         }
+            #                     ]
+            #                     currentUniqueId = cmo.finding_aggregate("SiteEngineer",arra)['data'][0]['Unique ID']
+            #                     if currentUniqueId!=changedUniqueId:
+            #                         duplicate = cmo.finding("SiteEngineer",{"Unique ID":changedUniqueId})['data']
+            #                         if duplicate:
+            #                             duplicateId = duplicate[0]['Unique ID']
+            #                             return respond({
+            #                                 'status':400,
+            #                                 "msg":f'This Unique Id "{duplicateId}" is already exist in Database',
+            #                                 "icon":"error"
+            #                             })
                                             
             updateBy = {"_id": ObjectId(uid)}
-            if "RFAI Date" in updatingData:
-                mileArra = [
-                    {"$match": {"siteId": ObjectId(uid)}},
-                    {"$sort": {"indexing": 1}},
-                ]
-                mileList = cmo.finding_aggregate("milestone", mileArra)["data"]
-                finaler = ctm.strtodate(updatingData["RFAI Date"])
-                finalerStart = finaler
-                for milei in mileList:
-                    finalerEnd = ctm.add_hour_in_udate(finalerStart, int(milei["estimateDay"]))
-                    dataMileList = {
-                        "mileStoneStartDate": finalerStart.strftime("%Y-%m-%d")+ "T00:00:00",
-                        "mileStoneEndDate": finalerEnd.strftime("%Y-%m-%d")+ "T00:00:00",
-                    }
-                    upby = {"_id": ObjectId(milei["_id"])}
-                    # dataMileList['assignDate']=current_time()
-                    cmo.updating("milestone", upby, dataMileList, False)
-                    finalerStart = finalerEnd
-                    updatingData["siteStartDate"] = finaler.strftime("%Y-%m-%d") + "T00:00:00"
-                    updatingData["siteEndDate"] = finalerEnd.strftime("%Y-%m-%d") + "T00:00:00"
+
+            # if "RFAI Date" in updatingData:
+            #     mileArra = [
+            #         {"$match": {"siteId": ObjectId(uid)}},
+            #         {"$sort": {"indexing": 1}},
+            #     ]
+            #     mileList = cmo.finding_aggregate("milestone", mileArra)["data"]
+            #     finaler = ctm.strtodate(updatingData["RFAI Date"])
+            #     finalerStart = finaler
+            #     for milei in mileList:
+            #         finalerEnd = ctm.add_hour_in_udate(finalerStart, int(milei["estimateDay"]))
+            #         dataMileList = {
+            #             "mileStoneStartDate": finalerStart.strftime("%Y-%m-%d")+ "T00:00:00",
+            #             "mileStoneEndDate": finalerEnd.strftime("%Y-%m-%d")+ "T00:00:00",
+            #         }
+            #         upby = {"_id": ObjectId(milei["_id"])}
+            #         cmo.updating("milestone", upby, dataMileList, False)
+            #         finalerStart = finalerEnd
+            #         updatingData["siteStartDate"] = finaler.strftime("%Y-%m-%d") + "T00:00:00"
+            #         updatingData["siteEndDate"] = finalerEnd.strftime("%Y-%m-%d") + "T00:00:00"
+
             response = cmo.updating("SiteEngineer", updateBy, updatingData, False)
             return respond(response)
 
         if name == "bulktask":
+
             assigningTo = allData['data']['assigningTo']
             finalData = []
-            if 'assignerId' not in uoData:
+
+            if not uoData.get("assignerId"):
                 return respond({
-                    'status':400,
-                    "icon":"warning",
-                    "msg":'Please Select At least one User'
+                    'status': 400,
+                    'icon': 'warning',
+                    'msg': 'Please select at least one user'
                 })
-            if uoData["assignerId"] == "":
-                return respond({
-                    'status':400,
-                    "icon":"warning",
-                    "msg":'Please Select At least one User'
-                })
+
                 
             for oneas in uoData["assignerId"].split(","):
                 finalData.append(ObjectId(oneas))
             
             dtwq = []
-            partnerAssignTask = []
+            # partnerAssignTask = []
             response = {}
             for oneas in uid:
                 arra = [
@@ -1560,9 +1562,9 @@ def globalSaver(current_user,uniqueId=None):
                         }
                     }, {
                         '$addFields': {
-                            'Site Id': {
+                            'FA Code': {
                                 '$arrayElemAt': [
-                                    '$result.Site Id', 0
+                                    '$result.FA Code', 0
                                 ]
                             }
                         }
@@ -1571,15 +1573,15 @@ def globalSaver(current_user,uniqueId=None):
                             'Name': {
                                 '$toString': '$Name'
                             }, 
-                            'Site Id': {
-                                '$toString': '$Site Id'
+                            'FA Code': {
+                                '$toString': '$FA Code'
                             }
                         }
                     }, {
                         '$addFields': {
                             'newField': {
                                 '$concat': [
-                                    '$Name', '(', '$Site Id', ')'
+                                    '$Name', '(', '$FA Code', ')'
                                 ]
                             }
                         }
@@ -1589,8 +1591,8 @@ def globalSaver(current_user,uniqueId=None):
                 resping = cmo.finding_aggregate("milestone", arra)["data"][0]
                 if resping["mileStoneStatus"] != "Open":
                     dtwq.append(resping["newField"])
-                if "typeAssigned" in resping and resping['typeAssigned'] == "Partner":
-                    partnerAssignTask.append(resping["newField"])
+                # if "typeAssigned" in resping and resping['typeAssigned'] == "Partner":
+                #     partnerAssignTask.append(resping["newField"])
                     
             if len(dtwq) > 0:
                 return respond(
@@ -1602,28 +1604,29 @@ def globalSaver(current_user,uniqueId=None):
                     }
                 )
                 
-            if len(partnerAssignTask) > 0:
-                return respond(
-                    {
-                        "status": 400,
-                        "icon": "warning",
-                        "msg": "The Task and Site ID pair allocated to a partner should be deallocated first.\n" + ", ".join(partnerAssignTask),
-                        "data": [],
-                    }
-                )
+            # if len(partnerAssignTask) > 0:
+            #     return respond(
+            #         {
+            #             "status": 400,
+            #             "icon": "warning",
+            #             "msg": "The Task and Site ID pair allocated to a partner should be deallocated first.\n" + ", ".join(partnerAssignTask),
+            #             "data": [],
+            #         }
+            #     )
+
             for oneas in uid:
                 data = {"assignerId": finalData}
-                data['assignDate'] = current_time()
+                data['assignDate'] = new_current_time()
+                data['typeAssigned'] = assigningTo
                 updateBy = {"_id":ObjectId(oneas)}
-                response = cmo.updating("milestone", updateBy, data, False,{"typeAssigned":1})
-                userArra = [{"$match": {"_id": {"$in": finalData}}}]
-                dtewformail = cmo.finding_aggregate("userRegister", userArra)["data"]
-                resping = cmo.finding_aggregate("milestone",[{'$match':{'_id':ObjectId(oneas)}}])["data"][0]
-                for smail in dtewformail:
-                    if assigningTo == "vendor":
-                        smail['empName'] = smail['vendorName']
-                    # print(oneas,current_user['userUniqueId'],allData["projectuniqueId"],resping["Name"],str(resping['siteId']))
-                    evl.newMileStone(oneas,current_user['userUniqueId'],allData["projectuniqueId"],resping["Name"],str(resping['siteId']),msg="Allocate a new task to "+ smail["empName"] + " using task allocation.")
+                cmo.updating("milestone", updateBy, data, False)
+                # userArra = [{"$match": {"_id": {"$in": finalData}}}]
+                # dtewformail = cmo.finding_aggregate("userRegister", userArra)["data"]
+                # resping = cmo.finding_aggregate("milestone",[{'$match':{'_id':ObjectId(oneas)}}])["data"][0]
+                # for smail in dtewformail:
+                #     if assigningTo == "vendor":
+                #         smail['empName'] = smail['vendorName']
+                #     evl.newMileStone(oneas,current_user['userUniqueId'],allData["projectuniqueId"],resping["Name"],str(resping['siteId']),msg="Allocate a new task to "+ smail["empName"] + " using task allocation.")
             # thread = Thread(target=Task_allocation_mail, args=(assigningTo,uid,finalData))
             # thread.start()
             return respond({

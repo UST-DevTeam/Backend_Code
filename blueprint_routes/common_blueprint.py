@@ -8680,6 +8680,22 @@ def templateupload(current_user,id=None):
                 "validate": cdcm.validate_Upload_Template,
                 "rename": cdcm.rename_Upload_Template,
             },
+            "Financial-Survey": {
+                "validate": cdcm.validate_Upload_Template,
+                "rename": cdcm.rename_Upload_Template,
+            },
+            "Financial-Signange": {
+                "validate": cdcm.validate_Upload_Template,
+                "rename": cdcm.rename_Upload_Template,
+            },
+            "Financial-Revisit": {
+                "validate": cdcm.validate_Upload_Template,
+                "rename": cdcm.rename_Upload_Template,
+            },
+            "Financial-Colo": {
+                "validate": cdcm.validate_Upload_Template,
+                "rename": cdcm.rename_Upload_Template,
+            },
             "MileStone": {
                 "validate": cdcm.validate_Upload_Milestone,
                 "rename": cdcm.rename_Upload_Milestone,
@@ -8717,7 +8733,7 @@ def templateupload(current_user,id=None):
             excel_file_path = os.path.join(os.getcwd(), allData["pathing"])
             validate = fileCheck[fileType]["validate"]
             rename = fileCheck[fileType]["rename"]
-            if fileType in ["Site Engg", "Financials", "Issues", "Tracking","Template","Planning Details","Site Details","RAN AT Checklist","Snap","Acceptance Log"]:
+            if fileType in ["Site Engg", "Financials","Financial-Survey","Financial-Signange","Financial-Revisit","Financial-Colo","Issues", "Tracking","Template","Planning Details","Site Details","Checklist","Snap","Acceptance Log"]:
                 valGames = [["Mandatory(Y/N)", ["Yes", "No"]],["InputType",["Text","Number","Decimal","Date","Dropdown","Auto Created"]],["Status", ["Active", "Inactive"]]]
             else:
                 valGames = []
@@ -8725,7 +8741,7 @@ def templateupload(current_user,id=None):
             if data["status"] == 200:
                 data["data"] = cfc.dfjson(data["data"])
                 updateBy = {"_id": ObjectId(id),"deleteStatus": {"$ne": 1}}
-                if fileType in ["Site Engg", "Financials", "Issues", "Tracking","Template","Planning Details","Site Details","Checklist","Snap","Acceptance Log"]:
+                if fileType in ["Site Engg", "Financials","Financial-Survey","Financial-Signange","Financial-Revisit","Financial-Colo","Issues", "Tracking","Template","Planning Details","Site Details","Checklist","Snap","Acceptance Log"]:
                     for index,datew in enumerate(data["data"]):
                         if (datew["dataType"] == "Dropdown" or datew["dataType"] == "Auto Created"):
                             datew["childView"] = True
@@ -8798,28 +8814,28 @@ def templateupload(current_user,id=None):
                     
                     
                     if fileType == "Site Engg":
-                        siteId = False
-                        prAll_rfi = False
+                        # siteId = False
+                        # prAll_rfi = False
                         for datew in data["data"]:
-                            if datew["fieldName"] == "Site Id":
-                                siteId = True
-                            if (datew["fieldName"] == "RFAI Date" or datew["fieldName"] == "Allocation Date"):
-                                prAll_rfi = True
-                        if siteId and prAll_rfi:
+                            # if datew["fieldName"] == "Site Id":
+                            #     siteId = True
+                            # if (datew["fieldName"] == "RFAI Date" or datew["fieldName"] == "Allocation Date"):
+                            #     prAll_rfi = True
+                        # if siteId and prAll_rfi:
                             tempData = {"t_sengg": data["data"]}
                             response = cmo.updating("projectType", updateBy, tempData, False)
                             return respond(response)
-                        else:
-                            finData = {"status": 422, "msg": ""}
-                            if siteId == False:
-                                finData["msg"] = (
-                                    'The "Site Id" field does not exist. Please create it.'
-                                )
-                            elif prAll_rfi == False:
-                                finData["msg"] = (
-                                    'The fields for "Allocation Date" or "RFAI Date" do not exist. Please create at least one of these fields.'
-                                )
-                            return respond(finData)
+                        # else:
+                        #     finData = {"status": 422, "msg": ""}
+                        #     if siteId == False:
+                        #         finData["msg"] = (
+                        #             'The "Site Id" field does not exist. Please create it.'
+                        #         )
+                        #     elif prAll_rfi == False:
+                        #         finData["msg"] = (
+                        #             'The fields for "Allocation Date" or "RFAI Date" do not exist. Please create at least one of these fields.'
+                        #         )
+                        #     return respond(finData)
                         
                     elif fileType == "Tracking":
                         for i in range(len(data["data"])):
@@ -8839,6 +8855,34 @@ def templateupload(current_user,id=None):
                         for i in range(len(data["data"])):
                             data["data"][i]["index"] = i + 1
                         tempData = {"t_sFinancials": data["data"]}
+                        response = cmo.updating("projectType", updateBy, tempData, False)
+                        return respond(response)
+                    
+                    elif fileType == "Financial-Survey":
+                        for i in range(len(data["data"])):
+                            data["data"][i]["index"] = i + 1
+                        tempData = {"t_sFinancials-survey": data["data"]}
+                        response = cmo.updating("projectType", updateBy, tempData, False)
+                        return respond(response)
+                    
+                    elif fileType == "Financial-Signange":
+                        for i in range(len(data["data"])):
+                            data["data"][i]["index"] = i + 1
+                        tempData = {"t_sFinancials-signange": data["data"]}
+                        response = cmo.updating("projectType", updateBy, tempData, False)
+                        return respond(response)
+                    
+                    elif fileType == "Financial-Revisit":
+                        for i in range(len(data["data"])):
+                            data["data"][i]["index"] = i + 1
+                        tempData = {"t_sFinancials-revisit": data["data"]}
+                        response = cmo.updating("projectType", updateBy, tempData, False)
+                        return respond(response)
+                    
+                    elif fileType == "Financial-Colo":
+                        for i in range(len(data["data"])):
+                            data["data"][i]["index"] = i + 1
+                        tempData = {"t_sFinancials-colo": data["data"]}
                         response = cmo.updating("projectType", updateBy, tempData, False)
                         return respond(response)
                     

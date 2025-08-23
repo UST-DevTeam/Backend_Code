@@ -3139,3 +3139,578 @@ def sample_site_function(current_user,id=None):
                 "msg":'No Data Found',
                 "data":[]
             })
+        
+
+@poLifeCycle_blueprint.route('/finance/invoiceWcc', methods=["GET"])
+@token_required
+def finance_invoice_wcc(current_user):
+    arra = [
+        {
+            '$match': {
+                'projectId': {
+                    '$in': projectId_str(current_user['userUniqueId'])
+                }
+            }
+        }
+    ]
+    if request.args.get("wccNumber") not in [None,"","undefined"]:
+        arra = arra + [
+            {
+                '$match':{
+                    'wccNumber':{
+                        '$regex':re.escape(request.args.get("wccNumber").strip()),
+                        '$options':'i'
+                    }
+                }
+            }
+        ]
+    if request.args.get("invoiceNumber") not in [None,"","undefined"]:
+        arra = arra + [
+            {
+                '$match':{
+                    'invoiceNumber':{
+                        '$regex':re.escape(request.args.get("invoiceNumber").strip()),
+                        '$options':'i'
+                    }
+                }
+            }
+        ]
+    arra = arra + [
+        {
+            '$project': {
+                'invoiceDate': 1, 
+                'wccNumber': 1, 
+                'invoiceNumber': 1, 
+                '_id': 0
+            }
+        }, {
+            '$addFields': {
+                'invoiceDate': {
+                    '$cond': [
+                        {
+                            '$eq': [
+                                '$invoiceDate', ''
+                            ]
+                        }, None, {
+                            '$toDate': '$invoiceDate'
+                        }
+                    ]
+                }
+            }
+        }, {
+            '$group': {
+                '_id': '$wccNumber', 
+                'invoiceNumber': {
+                    '$addToSet': '$invoiceNumber'
+                }, 
+                'invoiceDate': {
+                    '$last': '$invoiceDate'
+                }
+            }
+        }, {
+            '$addFields': {
+                'invoiceNumber': {
+                    '$reduce': {
+                        'input': '$invoiceNumber', 
+                        'initialValue': '', 
+                        'in': {
+                            '$concat': [
+                                '$$value', {
+                                    '$cond': [
+                                        {
+                                            '$eq': [
+                                                '$$value', ''
+                                            ]
+                                        }, '', ', '
+                                    ]
+                                }, '$$this'
+                            ]
+                        }
+                    }
+                }, 
+                'wccNumber': '$_id'
+            }
+        }, {
+            '$addFields': {
+                'year': {
+                    '$year': '$invoiceDate'
+                }, 
+                'month': {
+                    '$month': '$invoiceDate'
+                }
+            }
+        }, {
+            '$sort': {
+                'year': -1, 
+                'month': -1
+            }
+        }, {
+            '$addFields': {
+                'month': {
+                    '$switch': {
+                        'branches': [
+                            {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 1
+                                    ]
+                                }, 
+                                'then': 'Jan'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 2
+                                    ]
+                                }, 
+                                'then': 'Feb'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 3
+                                    ]
+                                }, 
+                                'then': 'Mar'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 4
+                                    ]
+                                }, 
+                                'then': 'Apr'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 5
+                                    ]
+                                }, 
+                                'then': 'May'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 6
+                                    ]
+                                }, 
+                                'then': 'Jun'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 7
+                                    ]
+                                }, 
+                                'then': 'Jul'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 8
+                                    ]
+                                }, 
+                                'then': 'Aug'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 9
+                                    ]
+                                }, 
+                                'then': 'Sep'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 10
+                                    ]
+                                }, 
+                                'then': 'Oct'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 11
+                                    ]
+                                }, 
+                                'then': 'Nov'
+                            }, {
+                                'case': {
+                                    '$eq': [
+                                        '$month', 12
+                                    ]
+                                }, 
+                                'then': 'Dec'
+                            }
+                        ], 
+                        'default': None
+                    }
+                }
+            }
+        }
+    ]
+    if request.args.get("year") not in [None,"","undefined"]:
+            arra = arra + [
+                {
+                    '$match':{
+                        'year':request.args.get("year")
+                    }
+                }
+            ]
+    if request.args.get("month") not in [None,"","undefined"]:
+            arra = arra + [
+                {
+                    '$match':{
+                        'month':request.args.get("month")
+                    }
+                }
+            ]
+    arra = arra + [
+        {
+            '$project': {
+                '_id': 0, 
+                'invoiceDate': 0
+            }
+        }
+    ]
+    arra = arra + apireq.countarra("invoice",arra) + apireq.args_pagination(request.args)
+    response = cmo.finding_aggregate("invoice",arra)
+    return respond(response)
+
+
+
+
+
+
+
+# status = [
+# "SSID00234460",
+# "SSID00234463",
+# "SSID00234465",
+# "SSID00234466",
+# "SSID00234471",
+# "SSID00234472",
+# "SSID00234476",
+# "SSID00234478",
+# "SSID00235948",
+# "SSID00237571",
+# "SSID00237645",
+# "SSID00237647",
+# "SSID00239104",
+# "SSID00239105",
+# "SSID00239106",
+# "SSID00239107",
+# "SSID00239607",
+# "SSID00242031",
+# "SSID00242032",
+# "SSID00242035",
+# "SSID00242504",
+# "SSID00242506",
+# "SSID00242507",
+# "SSID00242508",
+# "SSID00242509",
+# "SSID00242510",
+# "SSID00242512",
+# "SSID00242513",
+# "SSID00242514",
+# "SSID00242515",
+# "SSID00242517",
+# "SSID00242518",
+# "SSID00242519",
+# "SSID00242520",
+# "SSID00242521",
+# "SSID00242522",
+# "SSID00242523",
+# "SSID00242524",
+# "SSID00242525",
+# "SSID00242526",
+# "SSID00242527",
+# "SSID00242528",
+# "SSID00242531",
+# "SSID00242532",
+# "SSID00242533",
+# "SSID00242534",
+# "SSID00242535",
+# "SSID00242536",
+# "SSID00242537",
+# "SSID00242538",
+# "SSID00242539",
+# "SSID00242540",
+# "SSID00242541",
+# "SSID00242542",
+# "SSID00242543",
+# "SSID00242545",
+# "SSID00242546",
+# "SSID00243708",
+# "SSID00247168",
+# "SSID00247169",
+# "SSID00247170",
+# "SSID00247171",
+# "SSID00247172",
+# "SSID00247173",
+# "SSID00247174",
+# "SSID00247175",
+# "SSID00247176",
+# "SSID00247178",
+# "SSID00247179",
+# "SSID00247180",
+# "SSID00247181",
+# "SSID00247182",
+# "SSID00251500",
+# "SSID00251501",
+# "SSID00252042",
+# "SSID00252048",
+# "SSID00252049",
+# "SSID00252050",
+# "SSID00252051",
+# "SSID00252052",
+# "SSID00252053",
+# "SSID00252054",
+# "SSID00252055",
+# "SSID00252056",
+# "SSID00252058",
+# "SSID00252059",
+# "SSID00252060",
+# "SSID00252062",
+# "SSID00252063",
+# "SSID00252114",
+# "SSID00252115",
+# "SSID00252118",
+# "SSID00252119",
+# "SSID00252120",
+# "SSID00252121",
+# "SSID00252122",
+# "SSID00252123",
+# "SSID00252125",
+# "SSID00252126",
+# "SSID00252127",
+# "SSID00252129",
+# "SSID00252133",
+# "SSID00252134",
+# "SSID00252135",
+# "SSID00252138",
+# "SSID00252139",
+# "SSID00252140",
+# "SSID00252141",
+# "SSID00252144",
+# "SSID00252146",
+# "SSID00252147",
+# "SSID00252148",
+# "SSID00252149",
+# "SSID00252151",
+# "SSID00252152",
+# "SSID00252153",
+# "SSID00252154",
+# "SSID00253961",
+# "SSID00253963",
+# "SSID00253964",
+# "SSID00253965",
+# "SSID00253967",
+# "SSID00253968",
+# "SSID00253969",
+# "SSID00253970",
+# "SSID00253971",
+# "SSID00253973",
+# "SSID00254182",
+# "SSID00254183",
+# "SSID00254184",
+# "SSID00254185",
+# "SSID00254186",
+# "SSID00254187",
+# "SSID00254188",
+# "SSID00254189",
+# "SSID00254190",
+# "SSID00254191",
+# "SSID00254192",
+# "SSID00254193",
+# "SSID00254194",
+# "SSID00254195",
+# "SSID00254196",
+# "SSID00254197",
+# "SSID00254198",
+# "SSID00254199",
+# "SSID00254201",
+# "SSID00254202",
+# "SSID00254205",
+# "SSID00254206",
+# "SSID00254207",
+# "SSID00254209",
+# "SSID00254210",
+# "SSID00254215",
+# "SSID00254223",
+# "SSID00254273",
+# "SSID00254274",
+# "SSID00254275",
+# "SSID00254277",
+# "SSID00255872",
+# "SSID00255873",
+# "SSID00255874",
+# "SSID00255875",
+# "SSID00255876",
+# "SSID00255877",
+# "SSID00255947",
+# "SSID00255948",
+# "SSID00255949",
+# "SSID00255950",
+# "SSID00259732",
+# "SSID00263174",
+# "SSID00263175",
+# "SSID00263176",
+# "SSID00263177",
+# "SSID00263178",
+# "SSID00263179",
+# "SSID00263180",
+# "SSID00263181",
+# "SSID00263182",
+# "SSID00263183",
+# "SSID00263184",
+# "SSID00263185",
+# "SSID00263186",
+# "SSID00263187",
+# "SSID00263232",
+# "SSID00263233",
+# "SSID00263234",
+# "SSID00263236",
+# "SSID00263237",
+# "SSID00263238",
+# "SSID00263239",
+# "SSID00263240",
+# "SSID00263241",
+# "SSID00263242",
+# "SSID00263243",
+# "SSID00263244",
+# "SSID00263245",
+# "SSID00263247",
+# "SSID00263268",
+# "SSID00264678",
+# "SSID00264679",
+# "SSID00264680",
+# "SSID00265235",
+# "SSID00265236",
+# "SSID00265237",
+# "SSID00265238",
+# "SSID00265239",
+# "SSID00265240",
+# "SSID00265241",
+# "SSID00265242",
+# "SSID00265243",
+# "SSID00265244",
+# "SSID00265245",
+# "SSID00265246",
+# "SSID00265247",
+# "SSID00265248",
+# "SSID00265249",
+# "SSID00265250",
+# "SSID00265251",
+# "SSID00265252",
+# "SSID00265253",
+# "SSID00265254",
+# "SSID00265255",
+# "SSID00265256",
+# "SSID00265257",
+# "SSID00265258",
+# "SSID00265260",
+# "SSID00265267",
+# "SSID00265268",
+# "SSID00266193",
+# "SSID00266195",
+# "SSID00266196",
+# "SSID00266197",
+# "SSID00266198",
+# "SSID00266204",
+# "SSID00266206",
+# "SSID00266207",
+# "SSID00266209",
+# "SSID00266211",
+# "SSID00266212",
+# "SSID00266213",
+# "SSID00266214",
+# "SSID00266216",
+# "SSID00266217",
+# "SSID00266218",
+# "SSID00266219",
+# "SSID00266222",
+# "SSID00266224",
+# "SSID00266225",
+# "SSID00266227",
+# "SSID00266229",
+# "SSID00266231",
+# "SSID00266232",
+# "SSID00266233",
+# "SSID00266234",
+# "SSID00266236",
+# "SSID00266237",
+# "SSID00266238",
+# "SSID00266239",
+# "SSID00266240",
+# "SSID00266242",
+# "SSID00266243",
+# "SSID00266244",
+# "SSID00266245",
+# "SSID00266247",
+# "SSID00266248",
+# "SSID00266249",
+# "SSID00266251",
+# "SSID00266252",
+# "SSID00266253",
+# "SSID00266254",
+# "SSID00266255",
+# "SSID00266256",
+# "SSID00266257",
+# "SSID00266258",
+# "SSID00266260",
+# "SSID00266261",
+# "SSID00266262",
+# "SSID00266263",
+# "SSID00266264",
+# "SSID00266265",
+# "SSID00266266",
+# "SSID00266267",
+# "SSID00266268",
+# "SSID00266269",
+# "SSID00266270",
+# "SSID00266271",
+# "SSID00266288",
+# "SSID00266289",
+# "SSID00266290",
+# "SSID00266291",
+# "SSID00266292",
+# "SSID00268489",
+# "SSID00271660",
+# "SSID00271667",
+# "SSID00271668",
+# "SSID00271669",
+# "SSID00271670",
+# "SSID00271671",
+# "SSID00271672",
+# "SSID00271849",
+# "SSID00271851",
+# "SSID00271859",
+# "SSID00271861",
+# "SSID00271863",
+# "SSID00271865",
+# "SSID00271868",
+# "SSID00271870",
+# "SSID00271872",
+# "SSID00271873",
+# "SSID00271874",
+# "SSID00271875",
+# "SSID00271876",
+# ]
+
+# print(len(status),"3693")
+
+# def my_arra():
+#     arra = [
+#         {
+#             '$match': {
+#                 'systemId': {
+#                     '$in': status
+#                 }
+#             }
+#         }, {
+#             '$project': {
+#                 '_id': {
+#                     '$toString': '$_id'
+#                 }
+#             }
+#         }
+#     ]
+#     response = cmo.finding_aggregate("SiteEngineer",arra)['data']
+#     print(len(response),"3709")
+
+#     for i in response:
+#         cmo.updating("invoice",{'siteId':i['_id']},{'status':'Partially Billed'},False)
+#     print("completed")  

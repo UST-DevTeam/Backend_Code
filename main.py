@@ -64,20 +64,20 @@ def home():
     
     return "<h1>Welcome to Backend Server...</h1>"
 
-def my_function():
-    get_gpTracking()
+# def my_function():
+#     get_gpTracking()
 
 
-schedule.every(30).minutes.do(my_function)
+# schedule.every(30).minutes.do(my_function)
 
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(10)  
+# def run_scheduler():
+#     while True:
+#         schedule.run_pending()
+#         time.sleep(10)  
 
 
-scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-scheduler_thread.start()
+# scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+# scheduler_thread.start()
 
 
 

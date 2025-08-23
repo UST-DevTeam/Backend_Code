@@ -101,7 +101,6 @@ def insertion(dbname,data):
 
     except errors.DuplicateKeyError as dke:
 
-        # print(dke.details["keyValue"])
         col=db[dbname]
         dictdata=dke.details["keyValue"]
         dictdata["deleteStatus"]=1
@@ -112,24 +111,20 @@ def insertion(dbname,data):
         }
         if(len(finsDatadps)>0):
             resp=col.update_one(dke.details["keyValue"],{'$unset':removeThis})
-            print(finsDatadps[0]["_id"])
             status["state"]=1
             status["operation_id"]=finsDatadps[0]["_id"]
             status["data"]=[]
             status["msg"]="Data Added Successfully"
         else:
-            print(finsDatadps,"finsDatadps")
             msg=dke.details["keyPattern"].keys()
-            print(msg)
             status["state"]=2
             status["data"]=[]
             status["msg"]=list(msg)[0]+" Already Exist"
     
     except errors.WriteError as we:
-        print(we.details)
+        # print(we.details)
         msg=""
         for i in we.details["errInfo"]["details"]["schemaRulesNotSatisfied"]:
-            print(i,"i")
 
             if("propertiesNotSatisfied" in i):
                 for j in i["propertiesNotSatisfied"]:

@@ -90,8 +90,7 @@ export_blueprint = Blueprint("export_blueprint", __name__)
 @export_blueprint.route("/template/<filePath>", methods=["GET"])
 @token_required
 def template_download(current_user, filePath):
-    print(filePath,"skjdhfgkjfd")
-    if filePath in ["Site Engg", "Financials", "Issues", "Tracking","Template","Planning Details","Site Details","Checklist","Snap","Acceptance Log"]:
+    if filePath in ["Site Engg", "Financials","Financial-Survey","Financial-Signange","Financial-Revisit","Financial-Colo", "Issues", "Tracking","Template","Planning Details","Site Details","Checklist","Snap","Acceptance Log"]:
         filePath = "Template.xlsx"
     if filePath == "MileStone":
         filePath = "MileStone.xlsx"
@@ -2620,14 +2619,17 @@ def export_manageCustomer_download(current_user):
 @token_required
 def export_Template(current_user,type=None, id=None):
     if request.method == "GET":
-        if type in ["Site Engg", "Tracking", "Issues", "Financials"]:
+        if type in ["Site Engg", "Tracking", "Financial-Survey","Financial-Signange","inancial-Revisit","Financial-Colo"]:
             arra = [
                 {"$match": {"_id": ObjectId(id)}},
                 {
                     "$project": {
                         "t_tracking": 0,
                         "t_issues": 0,
-                        "t_sFinancials": 0,
+                        "t_sFinancials-survey": 0,
+                        "t_sFinancials-signange":0,
+                        "t_sFinancials-revisit":0,
+                        "t_sFinancials-colo":0,
                         "MileStone": 0,
                         "Commercial": 0,
                     }
@@ -2684,9 +2686,11 @@ def export_Template(current_user,type=None, id=None):
                 {"$match": {"_id": ObjectId(id)}},
                 {
                     "$project": {
-                        "t_issues": 0,
-                        "t_sFinancials": 0,
-                        "t_sengg": 0,
+                        "t_sengg":0,
+                        "t_sFinancials-survey": 0,
+                        "t_sFinancials-signange":0,
+                        "t_sFinancials-revisit":0,
+                        "t_sFinancials-colo":0,
                         "MileStone": 0,
                         "Commercial": 0,
                     }
@@ -2747,11 +2751,13 @@ def export_Template(current_user,type=None, id=None):
                 {"$match": {"_id": ObjectId(id)}},
                 {
                     "$project": {
-                        "t_sFinancials": 0,
                         "t_sengg": 0,
                         "t_tracking": 0,
-                        "Commercial": 0,
+                        "t_sFinancials-signange":0,
+                        "t_sFinancials-revisit":0,
+                        "t_sFinancials-colo":0,
                         "MileStone": 0,
+                        "Commercial": 0,
                     }
                 },
                 {"$addFields": {"custId": {"$toObjectId": "$custId"}}},
@@ -2771,15 +2777,15 @@ def export_Template(current_user,type=None, id=None):
                         }
                     }
                 },
-                {"$unwind": {"path": "$t_issues", "preserveNullAndEmptyArrays": True}},
+                {"$unwind": {"path": "$t_sFinancials-survey", "preserveNullAndEmptyArrays": True}},
                 {
                     "$addFields": {
-                        "Status": "$t_issues.Status",
-                        "dataType": "$t_issues.dataType",
-                        "fieldName": "$t_issues.fieldName",
-                        "index": "$t_issues.index",
-                        "required": "$t_issues.required",
-                        "dropdownValue": {"$ifNull": ["$t_issues.dropdownValue", ""]},
+                        "Status": "$t_sFinancials-survey.Status",
+                        "dataType": "$t_sFinancials-survey.dataType",
+                        "fieldName": "$t_sFinancials-survey.fieldName",
+                        "index": "$t_sFinancials-survey.index",
+                        "required": "$t_sFinancials-survey.required",
+                        "dropdownValue": {"$ifNull": ["$t_sFinancials-survey.dropdownValue", ""]},
                     }
                 },
                 {"$sort": {"index": 1}},
@@ -2808,7 +2814,9 @@ def export_Template(current_user,type=None, id=None):
                     "$project": {
                         "t_sengg": 0,
                         "t_tracking": 0,
-                        "t_issues": 0,
+                        "t_sFinancials-survey": 0,
+                        "t_sFinancials-revisit":0,
+                        "t_sFinancials-colo":0,
                         "MileStone": 0,
                         "Commercial": 0,
                     }
@@ -2832,19 +2840,19 @@ def export_Template(current_user,type=None, id=None):
                 },
                 {
                     "$unwind": {
-                        "path": "$t_sFinancials",
+                        "path": "$t_sFinancials-signange",
                         "preserveNullAndEmptyArrays": True,
                     }
                 },
                 {
                     "$addFields": {
-                        "Status": "$t_sFinancials.Status",
-                        "dataType": "$t_sFinancials.dataType",
-                        "fieldName": "$t_sFinancials.fieldName",
-                        "index": "$t_sFinancials.index",
-                        "required": "$t_sFinancials.required",
+                        "Status": "$t_sFinancials-signange.Status",
+                        "dataType": "$t_sFinancials-signange.dataType",
+                        "fieldName": "$t_sFinancials-signange.fieldName",
+                        "index": "$t_sFinancials-signange.index",
+                        "required": "$t_sFinancials-signange.required",
                         "dropdownValue": {
-                            "$ifNull": ["$t_sFinancials.dropdownValue", ""]
+                            "$ifNull": ["$t_sFinancials-signange.dropdownValue", ""]
                         },
                     }
                 },
@@ -2868,23 +2876,166 @@ def export_Template(current_user,type=None, id=None):
             response = response["data"]
             dataframe4 = pd.DataFrame(response)
 
+            arra = [
+                {"$match": {"_id": ObjectId(id)}},
+                {
+                    "$project": {
+                        "t_sengg": 0,
+                        "t_tracking": 0,
+                        "t_sFinancials-survey": 0,
+                        "t_sFinancials-signange":0,
+                        "t_sFinancials-colo":0,
+                        "MileStone": 0,
+                        "Commercial": 0,
+                    }
+                },
+                {"$addFields": {"custId": {"$toObjectId": "$custId"}}},
+                {
+                    "$lookup": {
+                        "from": "customer",
+                        "localField": "custId",
+                        "foreignField": "_id",
+                        "pipeline": [{"$match": {"deleteStatus": {"$ne": 1}}}],
+                        "as": "customerResult",
+                    }
+                },
+                {
+                    "$addFields": {
+                        "customer": {
+                            "$arrayElemAt": ["$customerResult.customerName", 0]
+                        }
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$t_sFinancials-revisit",
+                        "preserveNullAndEmptyArrays": True,
+                    }
+                },
+                {
+                    "$addFields": {
+                        "Status": "$t_sFinancials-revisit.Status",
+                        "dataType": "$t_sFinancials-revisit.dataType",
+                        "fieldName": "$t_sFinancials-revisit.fieldName",
+                        "index": "$t_sFinancials-revisit.index",
+                        "required": "$t_sFinancials-revisit.required",
+                        "dropdownValue": {
+                            "$ifNull": ["$t_sFinancials-revisit.dropdownValue", ""]
+                        },
+                    }
+                },
+                {"$sort": {"index": 1}},
+                {
+                    "$project": {
+                        "Customer": "$customer",
+                        "Project Type": "$projectType",
+                        "Sub Project": "$subProject",
+                        "Project Status": "$status",
+                        "FieldName": "$fieldName",
+                        "Mandatory(Y/N)": "$required",
+                        "InputType": "$dataType",
+                        "Dropdown Values": "$dropdownValue",
+                        "Status": "$Status",
+                        "_id": 0,
+                    }
+                },
+            ]
+            response = cmo.finding_aggregate("projectType", arra)
+            response = response["data"]
+            dataframe5 = pd.DataFrame(response)
+
+            arra = [
+                {"$match": {"_id": ObjectId(id)}},
+                {
+                    "$project": {
+                        "t_sengg": 0,
+                        "t_tracking": 0,
+                        "t_sFinancials-survey": 0,
+                        "t_sFinancials-signange":0,
+                        "t_sFinancials-revisit":0,
+                        "MileStone": 0,
+                        "Commercial": 0,
+                    }
+                },
+                {"$addFields": {"custId": {"$toObjectId": "$custId"}}},
+                {
+                    "$lookup": {
+                        "from": "customer",
+                        "localField": "custId",
+                        "foreignField": "_id",
+                        "pipeline": [{"$match": {"deleteStatus": {"$ne": 1}}}],
+                        "as": "customerResult",
+                    }
+                },
+                {
+                    "$addFields": {
+                        "customer": {
+                            "$arrayElemAt": ["$customerResult.customerName", 0]
+                        }
+                    }
+                },
+                {
+                    "$unwind": {
+                        "path": "$t_sFinancials-colo",
+                        "preserveNullAndEmptyArrays": True,
+                    }
+                },
+                {
+                    "$addFields": {
+                        "Status": "$t_sFinancials-colo.Status",
+                        "dataType": "$t_sFinancials-colo.dataType",
+                        "fieldName": "$t_sFinancials-colo.fieldName",
+                        "index": "$t_sFinancials-colo.index",
+                        "required": "$t_sFinancials-colo.required",
+                        "dropdownValue": {
+                            "$ifNull": ["$t_sFinancials-colo.dropdownValue", ""]
+                        },
+                    }
+                },
+                {"$sort": {"index": 1}},
+                {
+                    "$project": {
+                        "Customer": "$customer",
+                        "Project Type": "$projectType",
+                        "Sub Project": "$subProject",
+                        "Project Status": "$status",
+                        "FieldName": "$fieldName",
+                        "Mandatory(Y/N)": "$required",
+                        "InputType": "$dataType",
+                        "Dropdown Values": "$dropdownValue",
+                        "Status": "$Status",
+                        "_id": 0,
+                    }
+                },
+            ]
+            response = cmo.finding_aggregate("projectType", arra)
+            response = response["data"]
+            dataframe6 = pd.DataFrame(response)
+
             fullPath = os.path.join(os.getcwd(), "downloadFile", "Manage_Project_Type.xlsx")
             newExcelWriter = pd.ExcelWriter(fullPath, engine="xlsxwriter")
 
             dataframe1.to_excel(newExcelWriter, index=False, sheet_name="Site Engg")
             dataframe2.to_excel(newExcelWriter, index=False, sheet_name="Tracking")
-            dataframe3.to_excel(newExcelWriter, index=False, sheet_name="Issues")
-            dataframe4.to_excel(newExcelWriter, index=False, sheet_name="Financials")
+            dataframe3.to_excel(newExcelWriter, index=False, sheet_name="Financial-Survey")
+            dataframe4.to_excel(newExcelWriter, index=False, sheet_name="Financial-Signange")
+            dataframe5.to_excel(newExcelWriter, index=False, sheet_name="Financial-Revisit")
+            dataframe6.to_excel(newExcelWriter, index=False, sheet_name="Financial-Colo")
 
             workbook = newExcelWriter.book
             worksheet = newExcelWriter.sheets["Site Engg"]
             worksheet2 = newExcelWriter.sheets["Tracking"]
-            worksheet3 = newExcelWriter.sheets["Issues"]
-            worksheet4 = newExcelWriter.sheets["Financials"]
+            worksheet3 = newExcelWriter.sheets["Financial-Survey"]
+            worksheet4 = newExcelWriter.sheets["Financial-Signange"]
+            worksheet5 = newExcelWriter.sheets["Financial-Revisit"]
+            worksheet6 = newExcelWriter.sheets["Financial-Colo"]
+
             worksheet.set_tab_color("#92d050")
             worksheet2.set_tab_color("#00B0F0")
             worksheet3.set_tab_color("#FFFF00")
             worksheet4.set_tab_color("#FF0000")
+            worksheet5.set_tab_color("#7030A0")
+            worksheet6.set_tab_color("#ED7D31")
 
             header_format = workbook.add_format(
                 {
@@ -2909,6 +3060,12 @@ def export_Template(current_user,type=None, id=None):
 
             for col_num, value in enumerate(dataframe4.columns.values):
                 worksheet4.write(0, col_num, value, header_format)
+
+            for col_num, value in enumerate(dataframe5.columns.values):
+                worksheet5.write(0, col_num, value, header_format)
+
+            for col_num, value in enumerate(dataframe6.columns.values):
+                worksheet6.write(0, col_num, value, header_format)
 
             cell_format = workbook.add_format(
                 {
@@ -2944,6 +3101,20 @@ def export_Template(current_user,type=None, id=None):
             width = 20
             for col in range(start_column, end_column):
                 worksheet4.set_column(col, col, width, cell_format)
+
+            cols = len(dataframe5.axes[1])
+            start_column = 0
+            end_column = cols  # Ending column index
+            width = 20
+            for col in range(start_column, end_column):
+                worksheet5.set_column(col, col, width, cell_format)
+
+            cols = len(dataframe6.axes[1])
+            start_column = 0
+            end_column = cols  # Ending column index
+            width = 20
+            for col in range(start_column, end_column):
+                worksheet6.set_column(col, col, width, cell_format)
 
             newExcelWriter.close()
             return send_file(fullPath)

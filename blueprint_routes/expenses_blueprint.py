@@ -117,6 +117,7 @@ def currentFinancialMonth():
     return currentFinancialMonth
 
 
+
 def currentYear(): 
     tz = pytz.timezone("Asia/Kolkata")
     current_date = datetime.now(tz)
@@ -226,51 +227,11 @@ def updateattachment():
         )
 
     print('fileCompleted')
-# def ExpenseNonewLogic():
-#     ExpenseNo = "EXP"
-#     ExpenseNo = f"{ExpenseNo}/{currentFinancialMonth()}/"
 
-#     newArra = [{"$sort": {"expenseNumberInt": -1}}]
-#     responseData = cmo.finding_aggregate_with_deleteStatus("Expenses", newArra)["data"]
-#     if len(responseData) > 0 and "ExpenseNo" in responseData[0]:
-#         oldexpenseNo = responseData[0]["ExpenseNo"]
-#         ExpenseNo = generate_new_ExpenseNo(oldexpenseNo)
-#         return ExpenseNo
-
-
-
-# def ExpenseNonewLogic():
-#     ExpenseNo = "EXP"
-#     ExpenseNo = f"{ExpenseNo}/{currentFinancialMonth()}/"
-#     ExpenseNo2 = "EXP"
-#     ExpenseNo2 = f"{ExpenseNo2}/{currentFinancialMonth()}/"
-#     sortByExpenseNumber = [{"$sort": {"expenseNumberInt": -1}}]
-#     sortById = [{"$sort": {"_id": -1}}]
-#     responseData = cmo.finding_aggregate_with_deleteStatus("Expenses", sortByExpenseNumber)["data"]
-#     responseData2 = cmo.finding_aggregate_with_deleteStatus("Expenses", sortById)["data"]
-#     if len(responseData) > 0 and "ExpenseNo" in responseData[0]:
-#         oldExpenseNo = responseData[0]["ExpenseNo"]
-#         ExpenseNo=generate_new_ExpenseNo(oldExpenseNo)  
-#     if len(responseData2) > 0 and "ExpenseNo" in responseData2[0]:
-#         oldExpenseNo2 = responseData2[0]["ExpenseNo"]
-#         ExpenseNo2 = generate_new_ExpenseNo(oldExpenseNo2)
-#     if ExpenseNo2 == ExpenseNo:
-#         return ExpenseNo2
-        
-#     else:
-#         ExpenseNo2 = "EXP"
-#         ExpenseNo2 = f"{ExpenseNo2}/{currentFinancialMonth()}/"
-#         sortById = [{"$sort": {"_id": -1}}]
-#         responseData2 = cmo.finding_aggregate_with_deleteStatus("Expenses", sortById)["data"]
-#         if len(responseData2) > 0 and "ExpenseNo" in responseData2[0]:
-#             oldExpenseNo2 = responseData2[0]["ExpenseNo"]
-#             ExpenseNo2=generate_new_ExpenseNo(oldExpenseNo) 
-#         return ExpenseNo2
 
 def ExpenseNonewLogic():
     ExpenseNo2 = "EXP"
-    ExpenseNo2 = f"{ExpenseNo2}{currentYear()}/"
-    # sortById = [{"$sort": {"_id": -1}}]
+    ExpenseNo2 = f"{ExpenseNo2}{currentYear()}"
     counter = database.fileDetail.find_one_and_update({"id": "expenseIdCounter"},{"$inc": {"sequence_value": 1}},return_document=True,upsert=True)
     sequence_value = counter["sequence_value"]
     sequence_value=str(sequence_value).zfill(9)
@@ -2062,8 +2023,8 @@ def expensesFillExpense(current_user, id=None):
             varible = None
             varibleInt = None
             ggg = ExpenseNo.split("/")
-            financialyear = ggg[1]
-            varible = ggg[-1]
+            financialyear = ExpenseNo[3:7]
+            varible = ExpenseNo[7:]
             varibleInt = int(varible)
             if is_valid_mongodb_objectid(siteandTaskmatchingData.get("Siteid")):
                 siteandTaskmatchingData["Siteid"] = ObjectId(
@@ -3779,7 +3740,6 @@ def expensesfillDAEmpName(current_user, id=None):
                     }
                 },
             ]
-            # print("fghjhgfjkl", arr)
             Response = cmo.finding_aggregate("userRegister", arr)
             return respond(Response)
         else:
@@ -3923,11 +3883,12 @@ def ExpensesDAFillProjectId(current_user, id=None):
 @expenses_blueprint.route("/expenses/fillDA/<id>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 @token_required
 def expensesFillDA(current_user, id=None):
+
     if request.method == "GET":
         arr = []
         if id != None and id != "undefined":
-            
             arr = [{"$match": {"_id": ObjectId(id)}}]
+
         arr = arr + [
             {
                 "$match": {
@@ -4181,17 +4142,22 @@ def expensesFillDA(current_user, id=None):
             {"$replaceRoot": {"newRoot": "$data"}},
             {"$sort": {"expenseuniqueId": 1}},
         ]
-        # print("arrarrarruududu2", arr)
-        # arr = arr + apireq.commonarra + apireq.args_pagination(request.args)
         Response = cmo.finding_aggregate("Expenses", arr)
-        # print("utrtyuiop", arr)
         return respond(Response)
+    
+
     if request.method == "POST":
         if id == None:
             data = request.get_json()
             claimType = data["claimType"]
             Amount = data["Amount"]
             projectId = data["projectId"]
+            if data['totalDays'] in ["","undefined",None]:
+                data['totalDays'] = 1
+
+
+
+
             
             
             siteandTaskmatchingData = {
@@ -4283,19 +4249,18 @@ def expensesFillDA(current_user, id=None):
             ]
             shortcodeData = cmo.finding_aggregate("claimType", arr)["data"]
             if dataTomatch["value"] != True:
-                # print("Amounggggt", dataTomatch["value"], Amount)
+
                 if Amount != None or Amount != "undefined":
-                    if float(Amount) > int(dataTomatch["value"]):
+                    if float(Amount) > (int(dataTomatch["value"])*data['totalDays']):
                         return respond(
                             {
                                 "status": 400,
                                 "icon": "error",
-                                "msg": f"You can fill amount only equal to or less than {dataTomatch['value']} not for this {Amount}",
+                                "msg": f"You can fill amount only equal to or less than {int(dataTomatch["value"])*data['totalDays']} not for this {Amount}",
                             }
                         )
             # expenseNo=
             ####logic for expenseNo
-
             if data["EmpCode"] != None:
                 arrry = [
                     {"$match": {"_id": ObjectId(data["EmpCode"])}},
@@ -4321,8 +4286,8 @@ def expensesFillDA(current_user, id=None):
 
             if ExpenseNo not in ["", "undefined", None]:
                 ggg = ExpenseNo.split("/")
-                financialyear = ggg[1]
-                varible = ggg[-1]
+                financialyear = ExpenseNo[3:7]
+                varible = ExpenseNo[7:]
                 varibleInt = int(varible)
 
             datatoinsert = {
@@ -4349,7 +4314,10 @@ def expensesFillDA(current_user, id=None):
                 "FinancialYear": financialyear,
                 "expenseNumberInt": varibleInt,
                 "expenseNumberStr": varible,
-                'ApprovedAmount':float(Amount)
+                'ApprovedAmount':float(Amount),
+                "totalDays":data['totalDays'],
+                "startAt":data['startAt'],
+                "endAt":data['endAt']
             }
             datatoinsert["L1Approver"] = []
             datatoinsert["L1Approver"].insert(
@@ -4406,7 +4374,10 @@ def expensesFillDA(current_user, id=None):
                 "fillBy": "L1-Approver",
                 "additionalInfo": data["additionalInfo"],
                 'ApprovedAmount':float(Amount),
-                'Amount':float(Amount)
+                'Amount':float(Amount),
+                "totalDays":data['totalDays'],
+                "startAt":data['startAt'],
+                "endAt":data['endAt']
             }
             datatoinsert2["ExpenseUniqueId"] = ObjectId(Response["operation_id"])
             datatoinsert2["L1Approver"] = []
@@ -4420,20 +4391,19 @@ def expensesFillDA(current_user, id=None):
                     'ApprovedAmount':float(Amount),
                 },
             )
-            # print("fghjklghl;", datatoinsert2)
             datatoAproveris = cmo.insertion("Approval", datatoinsert2)
-            
-            # print(datatoAproveris["operation_id"])
             return respond(Response)
+        
         if id != None:
             data = request.get_json()
             claimType = data["claimType"]
             Amount = data["Amount"]
             projectId = data["projectId"]
+            if data['totalDays'] in ["","undefined",None]:
+                data['totalDays'] = 1
             siteandTaskmatchingData = {
                 "Amount": Amount,
             }
-            print('datadata',data)
             arro=[
                 {
                     '$match': {
@@ -4523,12 +4493,12 @@ def expensesFillDA(current_user, id=None):
             if dataTomatch["value"] != True:
                 # print("Amounggggt", dataTomatch["value"], Amount)
                 if Amount != None or Amount != "undefined":
-                    if float(Amount) > int(dataTomatch["value"]):
+                    if float(Amount) > (int(dataTomatch["value"])*data['totalDays']):
                         return respond(
                             {
                                 "status": 400,
                                 "icon": "error",
-                                "msg": f"You can fill DA only equal to or less than {dataTomatch['value']} not for this {Amount}",
+                                "msg": f"You can fill amount only equal to or less than {int(dataTomatch["value"])*data['totalDays']} not for this {Amount}",
                             }
                         )
 
@@ -4559,6 +4529,9 @@ def expensesFillDA(current_user, id=None):
                 "remark": data["remark"],
                 "action": "Approved",
                 "additionalInfo": data["additionalInfo"],
+                "totalDays":data['totalDays'],
+                "startAt":data['startAt'],
+                "endAt":data['endAt']
             }
             datatoinsert["L1Approver"] = []
             datatoinsert["L1Approver"].insert(
@@ -4586,6 +4559,9 @@ def expensesFillDA(current_user, id=None):
                 "type": "Expense",
                 "fillBy": "L1-Approver",
                 "additionalInfo": data["additionalInfo"],
+                "totalDays":data['totalDays'],
+                "startAt":data['startAt'],
+                "endAt":data['endAt']
             }
 
             datatoinsert2["L1Approver"] = []
@@ -4599,17 +4575,16 @@ def expensesFillDA(current_user, id=None):
                     'ApprovedAmount':float(Amount),
                 },
             )
-            # print("fghjklghl;", datatoinsert2)
-            datatoAproveris = cmo.updating(
-                "Approval", {"ExpenseUniqueId": ObjectId(id)}, datatoinsert2
-            )
-            # print(datatoAproveris["operation_id"])
+            datatoAproveris = cmo.updating("Approval", {"ExpenseUniqueId": ObjectId(id)}, datatoinsert2)
             return respond(Response)
+        
     if request.method == "DELETE":
         if id != None and id != "undefined":
             cmo.deleting_m2("Approval", {"ExpenseUniqueId": ObjectId(id)}, current_user["userUniqueId"])
             Response = cmo.deleting("Expenses", id,current_user["userUniqueId"])
             return respond(Response)
+
+
 
 
 @expenses_blueprint.route("/expenses/ExpenseNo", methods=["GET", "POST", "PUT", "DELETE"])
@@ -6979,7 +6954,7 @@ def AllExpenses(current_user, id=None):
                     "$addFields": {
                         "actionAt2": {
                             "$cond": {
-                                "if": {"$eq": ["$customisedStatus", 6]},
+                                "if": {"$in": ["$customisedStatus", [4,6]]},
                                 "then": "$actionAt",
                                 "else": None,
                             }
@@ -7743,7 +7718,7 @@ def AllExpenses(current_user, id=None):
                     "$addFields": {
                         "actionAt2": {
                             "$cond": {
-                                "if": {"$eq": ["$customisedStatus", 6]},
+                                "if": {"$in": ["$customisedStatus", [4,6]]},
                                 "then": "$actionAt",
                                 "else": None,
                             }
@@ -8587,7 +8562,7 @@ def ExportAllExpenses(current_user, id=None):
                     "$addFields": {
                         "actionAt2": {
                             "$cond": {
-                                "if": {"$eq": ["$customisedStatus", 6]},
+                                "if": {"$in": ["$customisedStatus", [4,6]]},
                                 "then": "$actionAt",
                                 "else": None,
                             }
@@ -9350,7 +9325,7 @@ def ExportAllExpenses(current_user, id=None):
                         "accountNumber": {"$toString": "$accountNumber"},
                         "actionAt2": {
                             "$cond": {
-                                "if": {"$eq": ["$customisedStatus", 6]},
+                                "if": {"$in": ["$customisedStatus", [4,6]]},
                                 "then": "$actionAt",
                                 "else": None,
                             }
@@ -10172,7 +10147,7 @@ def ExportUserExpenses(current_user, id=None):
                 "$addFields": {
                     "actionAt2": {
                         "$cond": {
-                            "if": {"$eq": ["$customisedStatus", 6]},
+                            "if": {"$in": ["$customisedStatus", [4,6]]},
                             "then": "$actionAt",
                             "else": None,
                         }

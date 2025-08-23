@@ -713,7 +713,8 @@ def projectallocation(current_user,id=None):
                 }
             }, {
                 '$addFields': {
-                    'projectIds': '$result.projectIds'
+                    'projectIds': '$result.projectIds',
+                    'marketIds': '$result.marketIds',
                 }
             }, {
                 '$lookup': {
@@ -737,10 +738,33 @@ def projectallocation(current_user,id=None):
                     'as': 'projectIdName'
                 }
             }, {
-                '$addFields': {
-                    'projectIdName': '$projectIdName.projectId'
+                '$lookup': {
+                    'from': 'market', 
+                    'localField': 'marketIds', 
+                    'foreignField': '_id', 
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'deleteStatus': {
+                                    '$ne': 1
+                                }
+                            }
+                        }, {
+                            '$project': {
+                                '_id': 0, 
+                                'marketName': 1
+                            }
+                        }
+                    ], 
+                    'as': 'marketName'
                 }
-            }]
+            }, {
+                '$addFields': {
+                    'projectIdName': '$projectIdName.projectId',
+                    'marketName': '$marketName.marketName',
+                }
+            }
+        ]
         if request.args.get("project") != None and request.args.get("project") != "":
             arra = arra + [
                 {
@@ -759,6 +783,25 @@ def projectallocation(current_user,id=None):
                     'projectIdName': {
                         '$reduce': {
                             'input': '$projectIdName', 
+                            'initialValue': '', 
+                            'in': {
+                                '$concat': [
+                                    '$$value', {
+                                        '$cond': [
+                                            {
+                                                '$eq': [
+                                                    '$$value', ''
+                                                ]
+                                            }, '', ','
+                                        ]
+                                    }, '$$this'
+                                ]
+                            }
+                        }
+                    },
+                    'marketName': {
+                        '$reduce': {
+                            'input': '$marketName', 
                             'initialValue': '', 
                             'in': {
                                 '$concat': [
@@ -811,13 +854,41 @@ def projectallocation(current_user,id=None):
                                 '$toString': '$$objectId'
                             }
                         }
-                    }
+                    },
+                    'marketIds': {
+                        '$map': {
+                            'input': '$marketIds', 
+                            'as': 'objectId', 
+                            'in': {
+                                '$toString': '$$objectId'
+                            }
+                        }
+                    },
                 }
             }, {
                 '$addFields': {
                     'projectIds': {
                         '$reduce': {
                             'input': '$projectIds', 
+                            'initialValue': '', 
+                            'in': {
+                                '$concat': [
+                                    '$$value', {
+                                        '$cond': [
+                                            {
+                                                '$eq': [
+                                                    '$$value', ''
+                                                ]
+                                            }, '', ','
+                                        ]
+                                    }, '$$this'
+                                ]
+                            }
+                        }
+                    },
+                    'marketIds': {
+                        '$reduce': {
+                            'input': '$marketIds', 
                             'initialValue': '', 
                             'in': {
                                 '$concat': [
@@ -849,67 +920,25 @@ def projectallocation(current_user,id=None):
     elif request.method == "POST":
         if id != None:
             project = request.json.get("projectIds")
+            market = request.json.get("marketIds")
+            project_value = []
+            market_value = []
             if project != "" and project != None:
-                value = []
                 for i in project.split(","):
-                    value.append(ObjectId(i))
-                allData = {
-                    "projectIds": value,
-                    "empId": id,
-                }
-                updateBy = {"empId": id}
-                try:
-                    Message=None
-                    AssignedProjects=""
-                    artt=[
-                            {
-                                '$match': {
-                                    'deleteStatus': {
-                                        '$ne': 1
-                                    }, 
-                                    '_id': {
-                                        '$in': allData['projectIds']
-                                    }
-                                }
-                            }, {
-                                '$project': {
-                                    '_id': 1, 
-                                    'projectId': 1
-                                }
-                            }
-                        ]
-                    responsedData=cmo.finding_aggregate("project",artt)['data']
-                    arty=[
-                        {
-                            '$match': {
-                                '_id': ObjectId(id), 
-                                'deleteStatus': {
-                                    '$ne': 1
-                                }
-                            }
-                        }, {
-                            '$project': {
-                                'empCode': 1, 
-                                'empName': 1, 
-                                '_id': 0
-                            }
-                        }
-                    ]
-                    userDetails=cmo.finding_aggregate("userRegister",arty)['data']
-                    for i in responsedData:
-                         AssignedProjects=AssignedProjects+i['projectId']+","
-                    Added=" these projects allocated to "+userDetails[0]['empName']+":-"+AssignedProjects
-                    cmo.insertion("AdminLogs",{'type':'Update','module':'Project Allocation','actionAt':current_time(),'actionBy':ObjectId(current_user['userUniqueId']),'action':Added})
-                except Exception as e:
-                    print(e)
-                response = cmo.updating("projectAllocation", updateBy, allData, True)
-                return respond(response)
-            else:
-                return respond({
-                    'status':400,
-                    "msg":"Please Select At least One Project",
-                    "icon":"Error"
-                })
+                    project_value.append(ObjectId(i))
+
+            if market != "" and market != None:
+                for i in market.split(","):
+                    market_value.append(ObjectId(i))
+            
+            allData = {
+                "projectIds": project_value,
+                "marketIds": market_value,
+                "empId": id,
+            }
+            updateBy = {"empId": id}
+            response = cmo.updating("projectAllocation", updateBy, allData, True)
+            return respond(response)
                 
     elif request.method == "DELETE":
         if id != None:
