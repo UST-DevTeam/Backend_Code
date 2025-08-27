@@ -1351,318 +1351,6 @@ def getCustomer(current_user):
 
 
 
-# @gpTracking_blueprint.route("/gp/costCenter",methods=["GET","POST"])
-# @gpTracking_blueprint.route("/gp/costCenter/<id>",methods=["GET","POST"])
-# @token_required
-# def getprojectGroup(current_user,id=None):
-#     if request.method == "GET":
-        
-        
-        
-#         if id != None:
-            
-#             if id.lower() ==  "airtel" :
-#                 arrt=[
-#                         {
-#                             '$addFields': {
-#                                 'customerName': {
-#                                     '$toLower': '$customerName'
-#                                 }
-#                             }
-#                         }, {
-#                             '$match': {
-#                                 'customerName': 'airtel'
-#                             }
-#                         }, {
-#                             '$project': {
-#                                 '_id': {
-#                                     '$toString': '$_id'
-#                                 }
-#                             }
-#                         }
-#                     ]
-#                 rett=cmo.finding_aggregate("customer",arrt)['data']
-#                 if len(rett):
-#                     id = rett[0]['_id']
-            
-            
-#             arr=[
-#                     {
-#                         '$match': {
-#                             'empId': current_user['userUniqueId']
-#                         }
-#                     }, 
-#                     {
-#                     '$lookup': {
-#                         'from': 'project', 
-#                         'localField': 'projectIds', 
-#                         'foreignField': '_id', 
-#                         'pipeline': [
-#                             {
-#                                 '$match': {
-#                                     'status': 'Active', 
-#                                     'deleteStatus': {
-#                                         '$ne': 1
-#                                     }
-#                                 }
-#                             }, {
-#                                 '$lookup': {
-#                                     'from': 'projectGroup', 
-#                                     'localField': 'projectGroup', 
-#                                     'foreignField': '_id', 
-#                                     'pipeline': [
-#                                         {
-#                                             '$match': {
-#                                                 'deleteStatus': {
-#                                                     '$ne': 1
-#                                                 },
-#                                                 'customerId':ObjectId(id)
-#                                             }
-#                                         }, {
-#                                             '$lookup': {
-#                                                 'from': 'costCenter', 
-#                                                 'localField': 'costCenterId', 
-#                                                 'foreignField': '_id', 
-#                                                 'pipeline': [
-#                                                     {
-#                                                         '$match': {
-#                                                             'deleteStatus': {
-#                                                                 '$ne': 1
-#                                                             }
-#                                                         }
-#                                                     }, {
-#                                                         '$addFields': {
-#                                                             'uniqueId': {
-#                                                                 '$toString': '$_id'
-#                                                             }
-#                                                         }
-#                                                     }
-#                                                 ], 
-#                                                 'as': 'costCenter'
-#                                             }
-#                                         }, {
-#                                             '$project': {
-#                                                 'costCenter': {
-#                                                     '$arrayElemAt': [
-#                                                         '$costCenter.costCenter', 0
-#                                                     ]
-#                                                 }, 
-#                                                 'uniqueId': {
-#                                                     '$arrayElemAt': [
-#                                                         '$costCenter.uniqueId', 0
-#                                                     ]
-#                                                 }, 
-#                                                 '_id': 0
-#                                             }
-#                                         }
-#                                     ], 
-#                                     'as': 'result'
-#                                 }
-#                             }, {
-#                                 '$project': {
-#                                     'costCenter': {
-#                                         '$arrayElemAt': [
-#                                             '$result.costCenter', 0
-#                                         ]
-#                                     }, 
-#                                     'uniqueId': {
-#                                         '$arrayElemAt': [
-#                                             '$result.uniqueId', 0
-#                                         ]
-#                                     }, 
-#                                     '_id': 0
-#                                 }
-#                             }, {
-#                                 '$group': {
-#                                     '_id': '$uniqueId', 
-#                                     'data': {
-#                                         '$first': '$$ROOT'
-#                                     }
-#                                 }
-#                             }, {
-#                                 '$replaceRoot': {
-#                                     'newRoot': {
-#                                         '$ifNull': [
-#                                             '$data', {}
-#                                         ]
-#                                     }
-#                                 }
-#                             }
-#                         ], 
-#                         'as': 'result'
-#                     }
-#                 }, {
-#                     '$unwind': {
-#                         'path': '$result', 
-#                         'preserveNullAndEmptyArrays': True
-#                     }
-#                 },  {
-#                         '$match': {
-#                             'result': {
-#                                 '$ne': {}
-#                             }
-#                         }
-#                     },{
-#                     '$replaceRoot': {
-#                         'newRoot': {
-#                             '$ifNull': [
-#                                 '$result', {}
-#                             ]
-#                         }
-#                     }
-#                 }, {
-#                     '$sort': {
-#                         'costCenter': 1
-#                     }
-#                 }, {
-#                     '$project': {
-#                         'costCenterId': '$uniqueId', 
-#                         'costCenter': 1, 
-#                         '_id': 0
-#                     }
-#                 }
-#                 ]
-#             Response=cmo.finding_aggregate("projectAllocation",arr)
-#             return respond(Response)
-#         else:
-#             arr=[
-#                     {
-#                         '$match': {
-#                             'empId': current_user['userUniqueId']
-#                         }
-#                     }, 
-#                     {
-#                     '$lookup': {
-#                         'from': 'project', 
-#                         'localField': 'projectIds', 
-#                         'foreignField': '_id', 
-#                         'pipeline': [
-#                             {
-#                                 '$match': {
-#                                     'status': 'Active', 
-#                                     'deleteStatus': {
-#                                         '$ne': 1
-#                                     }
-#                                 }
-#                             }, {
-#                                 '$lookup': {
-#                                     'from': 'projectGroup', 
-#                                     'localField': 'projectGroup', 
-#                                     'foreignField': '_id', 
-#                                     'pipeline': [
-#                                         {
-#                                             '$match': {
-#                                                 'deleteStatus': {
-#                                                     '$ne': 1
-#                                                 },
-                                               
-#                                             }
-#                                         }, {
-#                                             '$lookup': {
-#                                                 'from': 'costCenter', 
-#                                                 'localField': 'costCenterId', 
-#                                                 'foreignField': '_id', 
-#                                                 'pipeline': [
-#                                                     {
-#                                                         '$match': {
-#                                                             'deleteStatus': {
-#                                                                 '$ne': 1
-#                                                             }
-#                                                         }
-#                                                     }, {
-#                                                         '$addFields': {
-#                                                             'uniqueId': {
-#                                                                 '$toString': '$_id'
-#                                                             }
-#                                                         }
-#                                                     }
-#                                                 ], 
-#                                                 'as': 'costCenter'
-#                                             }
-#                                         }, {
-#                                             '$project': {
-#                                                 'costCenter': {
-#                                                     '$arrayElemAt': [
-#                                                         '$costCenter.costCenter', 0
-#                                                     ]
-#                                                 }, 
-#                                                 'uniqueId': {
-#                                                     '$arrayElemAt': [
-#                                                         '$costCenter.uniqueId', 0
-#                                                     ]
-#                                                 }, 
-#                                                 '_id': 0
-#                                             }
-#                                         }
-#                                     ], 
-#                                     'as': 'result'
-#                                 }
-#                             }, {
-#                                 '$project': {
-#                                     'costCenter': {
-#                                         '$arrayElemAt': [
-#                                             '$result.costCenter', 0
-#                                         ]
-#                                     }, 
-#                                     'uniqueId': {
-#                                         '$arrayElemAt': [
-#                                             '$result.uniqueId', 0
-#                                         ]
-#                                     }, 
-#                                     '_id': 0
-#                                 }
-#                             }, {
-#                                 '$group': {
-#                                     '_id': '$uniqueId', 
-#                                     'data': {
-#                                         '$first': '$$ROOT'
-#                                     }
-#                                 }
-#                             }, {
-#                                 '$replaceRoot': {
-#                                     'newRoot': {
-#                                         '$ifNull': [
-#                                             '$data', {}
-#                                         ]
-#                                     }
-#                                 }
-#                             }
-#                         ], 
-#                         'as': 'result'
-#                     }
-#                 }, {
-#                     '$unwind': {
-#                         'path': '$result', 
-#                         'preserveNullAndEmptyArrays': True
-#                     }
-#                 }, {
-#                 '$match': {
-#                     'result': {
-#                         '$ne': {}
-#                     }
-#                 }
-#             }, {
-#                     '$replaceRoot': {
-#                         'newRoot': {
-#                             '$ifNull': [
-#                                 '$result', {}
-#                             ]
-#                         }
-#                     }
-#                 }, {
-#                     '$sort': {
-#                         'costCenter': 1
-#                     }
-#                 }, {
-#                     '$project': {
-#                         'costCenterId': '$uniqueId', 
-#                         'costCenter': 1, 
-#                         '_id': 0
-#                     }
-#                 }
-#                 ]
-#             Response=cmo.finding_aggregate("projectAllocation",arr)
-#             return respond(Response)
             
 
 
@@ -2514,15 +2202,11 @@ def get_gpTracking(current_user,id=None):
                     }
                 }
             ]
-        print(artu,'artuartuartuartuartuartuartu')
         workDoneDatadfResponse=cmo.finding_aggregate("schedulerData",artu)['data'] 
-        print(getcccdc(),'8888881')
         workDoneDatadf=pd.DataFrame([])
         if len(workDoneDatadfResponse):
             workDoneDatadf = pd.DataFrame(workDoneDatadfResponse)
         arrt1=[]
-        print('daysSpentdaysSpentdaysSpent',daysSpent,customMonthList,gggg[0])
-        print(getcccdc(),'8888882')
         if daysSpent<31 and len(customMonthList)== 1 and customMonthList[0]==gggg[0]:
             arrt1=[{
                 '$addFields': {
@@ -2632,11 +2316,8 @@ def get_gpTracking(current_user,id=None):
                 },
                 
             ]
-        print(getcccdc(),'8888883')
         Response3=cmo.finding_aggregate("SalaryDB",arrt+arrt1)
-        print(getcccdc(),'8888884')
         salaryDBDf = pd.DataFrame(Response3['data'])
-        print(getcccdc(),'8888885')
         artty1=[]
         if daysSpent<31 and len(customMonthList)== 1 and customMonthList[0]==gggg[0]:
             artty1=[{
@@ -2746,10 +2427,8 @@ def get_gpTracking(current_user,id=None):
                     }
                 }
             ]
-        print(getcccdc(),'8888886')
         Response4=cmo.finding_aggregate("OtherFixedCost",artty+artty1)
         OtherFixedCostDf = pd.DataFrame(Response4['data'])
-        print(getcccdc(),'8888887')
         ####logic for Vendor Cost
         
         mainDf=pd.DataFrame([])
@@ -2858,7 +2537,7 @@ def get_gpTracking(current_user,id=None):
         # expenseDf=expenseDf[expenseDf['projectId'].isin(projectDf['projectId'])]
         if 'ApprovedAmount' not in mainDf.columns:
             mainDf["ApprovedAmount"] = None
-        print(getcccdc(),'88888815')
+
         mainDf['COGS']=mainDf['ApprovedAmount'].fillna(0)
         if 'totalSalary' in mainDf.columns:
             mainDf['COGS']=mainDf['COGS']+mainDf['totalSalary'].fillna(0)
@@ -2869,8 +2548,7 @@ def get_gpTracking(current_user,id=None):
               
         # mainDf['COGS']=mainDf['ApprovedAmount'].fillna(0)+mainDf['totalSalary'].fillna(0)+mainDf['TotalAmountvendorCost'].fillna(0)+mainDf['totalOtherFixedCost'].fillna(0)
         if 'total_Amount' not in mainDf:
-            mainDf['total_Amount'] = None
-        print(getcccdc(),'88888816')    
+            mainDf['total_Amount'] = None   
         mainDf['GROSSPROFITINR'] = mainDf['total_Amount'].fillna(0) - (mainDf['COGS'].fillna(0))
         mainDf['GPRevenuePercentage'] = (mainDf['GROSSPROFITINR'].fillna(0) / mainDf['total_Amount'].fillna(0)) * 100
         # print(mainDf.columns,'whyhywhhjhjehjyyegyyu')
@@ -2880,7 +2558,6 @@ def get_gpTracking(current_user,id=None):
             mainDf = mainDf[mainDf['Month'].isin(customMonthList)]
         if len(customYearList):
             mainDf = mainDf[mainDf['Year'].isin(customYearList)]
-        print(getcccdc(),'88888817') 
         # print('mainDfmainDfmainDfmainDfmainDf12345678',mainDf.columns)
         if len(zoneList):
             mainDf = mainDf[mainDf['zone'].isin(zoneList)]
@@ -2888,8 +2565,6 @@ def get_gpTracking(current_user,id=None):
             mainDf = mainDf[mainDf['costCenter'].isin(costCentersList)]
         if len(customersList):
             mainDf = mainDf[mainDf['customer'].isin(customersList)]
-        print(getcccdc(),'88888818') 
-        print(current_user['userUniqueId'])
         artyi=[
             {
                 '$match': {
@@ -3027,21 +2702,18 @@ def get_gpTracking(current_user,id=None):
                 }
             }
         ]
-        print(getcccdc(),'88888819') 
         Resty=cmo.finding_aggregate("projectAllocation",artyi)['data']
         if len(Resty):
             projectAlloctionDf=pd.DataFrame(Resty)
             mainDf=pd.merge(projectAlloctionDf,mainDf,on=['costCenter','customer'],how='inner')
         mainDf['Month'] = mainDf['Month'].map(month_map)
           
-        print(getcccdc(),'88888820') 
         columnsLPA = ['totalOtherFixedCost', 'ApprovedAmount', 'COGS', 'TotalAmount','TotalAmountvendorCost', 'totalSalary', 'total_Amount','GROSSPROFITINR']
         for col in columnsLPA:
             if col in mainDf.columns:
                 mainDf[col] = mainDf[col].apply(
                     lambda x: round(float(x) / 100000, 2) if pd.notna(x) and x != '' else 0
                 )
-        print(getcccdc(),'88888821') 
         mainDf['uniqueId']=1
         json_Data = json.loads(mainDf.to_json(orient='records'))
         return respond({

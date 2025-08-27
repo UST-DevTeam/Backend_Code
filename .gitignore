@@ -3,3 +3,4 @@
 /downloadFile
 /downloads
 .env
+/__pycache__

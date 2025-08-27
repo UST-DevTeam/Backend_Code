@@ -182,7 +182,7 @@ def sendmail_any_attachment(uid="",dbname="",query="",imageList=[],to=[],cc=[],s
     print("successfully sent email from %s to %s:" % (msg['From'],msg['To']))
 
 
-def formatted_sendmail(to,cc,subject,message):
+def formatted_sendmail(to,cc,subject,message,type=None):
 # create message object instance
     msg = MIMEMultipart()
 

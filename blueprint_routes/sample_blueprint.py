@@ -2719,7 +2719,7 @@ def export_dataRange():
                 }, 
                 'endDate': {
                     '$dateFromString': {
-                        'dateString': '2025-08-23T05:30:00.000+00:00'
+                        'dateString': '2025-08-25T05:30:00.000+00:00'
                     }
                 }
             }
@@ -3390,6 +3390,7 @@ def export_fullDump():
             '$project': {
                 "siteuid":'$siteId',  
                 'Item Code': '$itemCode', 
+                'Invoice Number': '$invoiceNumber', 
                 'Billing Status': '$status', 
                 '_id': 0
             }
@@ -3407,7 +3408,7 @@ def export_fullDump():
         mergedDF = mergedDF.merge(invoicedf,on="siteuid",how="left")
 
 
-    columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date","OA_(COMMERCIAL_TRAFFIC_PUT_ON_AIR)_(MS1)_DATE","MAPA_INCLUSION_DATE","Item Code","Billing Status"]
+    columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date","OA_(COMMERCIAL_TRAFFIC_PUT_ON_AIR)_(MS1)_DATE","MAPA_INCLUSION_DATE","Item Code","Invoice Number","Billing Status"]
     for col in columns_to_start:
         if col not in mergedDF.columns:
             mergedDF[col] = ''

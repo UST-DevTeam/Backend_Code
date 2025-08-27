@@ -502,25 +502,31 @@ def siteengineer(current_user,uniqueId=None):
                                     # 'mileStoneEndtDate1': {
                                     #     '$toDate': '$mileStoneEndDate'
                                     # }, 
-                                    'CC_Completion Date1': {
-                                        '$cond': {
-                                            'if': {
-                                                '$or': [
-                                                    {
-                                                        '$eq': [
-                                                            '$CC_Completion Date', None
-                                                        ]
-                                                    }, {
-                                                        '$eq': [
-                                                            '$CC_Completion Date', ''
-                                                        ]
-                                                    }
-                                                ]
-                                            }, 
-                                            'then': None, 
-                                            'else': {
-                                                '$toDate': '$CC_Completion Date'
-                                            }
+                                    # 'CC_Completion Date1': {
+                                    #     '$cond': {
+                                    #         'if': {
+                                    #             '$or': [
+                                    #                 {
+                                    #                     '$eq': [
+                                    #                         '$CC_Completion Date', None
+                                    #                     ]
+                                    #                 }, {
+                                    #                     '$eq': [
+                                    #                         '$CC_Completion Date', ''
+                                    #                     ]
+                                    #                 }
+                                    #             ]
+                                    #         }, 
+                                    #         'then': None, 
+                                    #         'else': {
+                                    #             '$toDate': '$CC_Completion Date'
+                                    #         }
+                                    #     }
+                                    # },
+                                    'CC_Completion Date': {
+                                        '$dateFromString': {
+                                            'dateString': '$CC_Completion Date', 
+                                            'format': '%m-%d-%Y', 
                                         }
                                     },
                                     'assignDate': {
@@ -532,24 +538,25 @@ def siteengineer(current_user,uniqueId=None):
                                 }
                             }, {
                                 '$addFields': {
-                                    'CC_Completion Date': {
-                                        '$cond': {
-                                            'if': {
-                                                '$eq': [
-                                                    {
-                                                        '$type': '$CC_Completion Date1'
-                                                    }, 'date'
-                                                ]
-                                            }, 
-                                            'then': {
-                                                '$dateToString': {
-                                                    'date': '$CC_Completion Date1', 
-                                                    'format': '%m-%d-%Y', 
-                                                }
-                                            }, 
-                                            'else': ''
-                                        }
-                                    }, 
+                                    # 'CC_Completion Date': {
+                                    #     '$cond': {
+                                    #         'if': {
+                                    #             '$eq': [
+                                    #                 {
+                                    #                     '$type': '$CC_Completion Date1'
+                                    #                 }, 'date'
+                                    #             ]
+                                    #         }, 
+                                    #         'then': {
+                                    #             '$dateToString': {
+                                    #                 'date': '$CC_Completion Date1', 
+                                    #                 'format': '%m-%d-%Y', 
+                                    #                 'timezone':"Asia/Kolkata"
+                                    #             }
+                                    #         }, 
+                                    #         'else': ''
+                                    #     }
+                                    # }, 
                                     # 'taskageing': {
                                     #     '$cond': {
                                     #         'if': {
@@ -593,7 +600,7 @@ def siteengineer(current_user,uniqueId=None):
                                                     '$divide': [
                                                         {
                                                             '$subtract': [
-                                                                '$CC_Completion Date1',"$assignDate"
+                                                                '$CC_Completion Date',"$assignDate"
                                                             ]
                                                         }, 86400000
                                                     ]
@@ -615,6 +622,12 @@ def siteengineer(current_user,uniqueId=None):
                                     "assignDate":{
                                         '$dateToString':{
                                             'date':"$assignDate",
+                                            'format': '%m-%d-%Y'
+                                        }
+                                    },
+                                    "CC_Completion Date":{
+                                        '$dateToString':{
+                                            'date':"$CC_Completion Date",
                                             'format': '%m-%d-%Y'
                                         }
                                     } 
@@ -1944,534 +1957,223 @@ def closeMilestone(current_user, id=None):
     tkn = False
     
     
-    globalSaverId=None
-    if "Checklist" in closedData and closedData['Checklist'] == "Yes" :
-        for i in closedData:
-            closedData[i] = closedData[i].strip()
-            
-        if closedData['projectTypeName'] == "DEGROW" and closedData['subProjectTypeName'] in ['TWIN BEAM','LAYER DEGROW','SECTOR DEGROW','4TR-2TR']:
-            checkingArray= {
-                "TWIN BEAM":{
-                    "Survey":["tbAnteena","existingAntenna","radio","bbuCard","miscMaterial","SnapData","subProjectName"],
-                    "SRQ Raise":["Template"],
-                    "Dismantle":['SnapData'],
-                },
-                "LAYER DEGROW":{
-                    "Survey":["existingAntenna","radio","bbuCard","miscMaterial","SnapData","subProjectName"],
-                    "SRQ Raise":["Template"],
-                    "Dismantle":['SnapData'],
-                },
-                "SECTOR DEGROW":{
-                    "Survey":["existingAntenna","radio","bbuCard","miscMaterial","SnapData","subProjectName"],
-                    "SRQ Raise":["Template"],
-                    "Dismantle":['SnapData'],
-                },
-                "4TR-2TR":{
-                    "Survey":["radio","bbuCard","miscMaterial"],
-                    "SRQ Raise":["Template"],
-                    "Dismantle":['SnapData'],
-                },
-            }
-            
-            arra = [
-                {
-                    '$match':{
-                        'siteuid':ObjectId(closedData['siteuid']),
-                        "milestoneuid":ObjectId(id),
-                    }
-                }, {
-                    "$addFields":{
-                        "_id":{"$toString":"$_id"},
-                        'mergedObjects': {
-                            'TB Antenna Specifications': '$tbAnteena.TB Antenna Quantity', 
-                            'Existing Other Antenna Specifications': '$existingAntenna.Existing Other Antenna Quantity', 
-                            'Radio Specifications In Sector': '$radio.Radio Quantity', 
-                            'BBU/card Specifications': '$bbuCard.BBU/Card Quantity'
-                        }
-                    }
-                }
-            ]
-            fetchCASData=cmo.finding_aggregate("complianceApproverSaver",arra)
-            if not len(fetchCASData['data']):
-                return respond({"status":400,"msg":"Please fill Complete--> 'Forms & Checklist'","icon":"error"}) 
-            globalSaverId = fetchCASData['data'][0]['_id']
-            notKeyExist= []
-            notMatchLength = []
-            for key in checkingArray[closedData['subProjectTypeName']][closedData['mName']]:
-                if key not in list(fetchCASData['data'][0].keys()):
-                    notKeyExist.append(key)
-            
-            if len(notKeyExist):
-                replacefieldName = {
-                    "tbAnteena":"TB Antenna Specifications in Sector",
-                    "existingAntenna":"Existing Antenna Specifications In Sector",
-                    "radio":"Radio Specifications In Sector",
-                    "bbuCard":"BBU/card Specifications",
-                    "miscMaterial":"Misc Material Specifications",
-                    "SnapData":"Snap",
-                    "Template":closedData['subProjectTypeName'],
-                    "subProjectName":closedData['subProjectTypeName']
-                }
-                notKeyExist = [replacefieldName[key] if key in replacefieldName else key for key in notKeyExist]
-                return respond({"status":400,"msg":f"Please fill Tab -- {','.join(notKeyExist)} ","icon":"error"})
-            if "SnapData" in checkingArray[closedData['subProjectTypeName']][closedData['mName']]:
-                if closedData['mName'] == "Survey":
-                    for key,value in fetchCASData['data'][0]['mergedObjects'].items():
-                        if key not in list(fetchCASData['data'][0]['SnapData'].keys()):
-                            notKeyExist.append(key)   
-                    if len(notKeyExist):
-                        return respond({"status":400,"msg":f"Please upload snap on Field Name -- {','.join(notKeyExist)} ","icon":"error"})
-                    
-                    for key,value in fetchCASData['data'][0]['mergedObjects'].items():
-                        expected_length = int(value)
-                        actual_length = len(fetchCASData['data'][0]['SnapData'][key]['images'])
-                        if actual_length != expected_length:
-                            notMatchLength.append(key)
-                    if len(notMatchLength):
-                        return respond({"status":400,"msg":f"Please upload All snap on Field Name -- {','.join(notMatchLength)} ","icon":"error"})
-                
-                elif closedData['mName'] == "Dismantle":
-                    arra = [
-                        {
-                            "$match":{
-                                "siteuid":ObjectId(closedData['siteuid']),
-                                'milestoneName': {
-                                    '$in': [
-                                        'Survey', 'SRQ Raise'
-                                    ]
-                                }
-                            }
-                        }, {
-                            '$addFields': {
-                                'sortkey': {
-                                    '$cond': [
-                                        {
-                                            '$ne': [
-                                                {
-                                                    '$type': '$Template'
-                                                }, 'missing'
-                                            ]
-                                        }, 1, 2
-                                    ]
-                                },
-                                'allObj': {
-                                    'TB Antenna': '$tbAnteena.TB Antenna Quantity', 
-                                    'Existing Other Antenna': '$existingAntenna.Existing Other Antenna Quantity', 
-                                    'Existing Antenna': '$existingAntenna.Existing Antenna Quantity', 
-                                    'Radio': '$radio.Radio Quantity', 
-                                    'BBU/Card': '$bbuCard.BBU/Card Quantity', 
-                                    'Jumper': '$miscMaterial.Jumper Quantity', 
-                                    'Cipri': '$miscMaterial.Cipri Quantity', 
-                                    'Power cable': '$miscMaterial.Power cable Quantity', 
-                                    'SFP': '$miscMaterial.SFP Quantity', 
-                                    'Dipexure': '$miscMaterial.Dipexure Quantity', 
-                                    'others': '$miscMaterial.others Quantity'
-                                }
-                            }
-                        }, {
-                            '$sort': {
-                                'sortkey': 1
-                            }
-                        }
-                    ]
-                    fetchData = cmo.finding_aggregate("complianceApproverSaver",arra)
-                    setObj={}
-                    if len(fetchData['data'])==2:
-                        for key,value in fetchData['data'][0]['Template'].items():
-                            if value=="YES" and key in fetchData['data'][1]['allObj'] and fetchData['data'][1]['allObj'][key] != "":
-                                setObj[key] = fetchData['data'][1]['allObj'][key]
-                        arra = [
-                            {
-                                '$match':{
-                                    'siteuid':ObjectId(closedData['siteuid']),
-                                    "milestoneuid":ObjectId(id),
-                                }
-                            }, {
-                                '$replaceRoot': {
-                                    'newRoot': '$SnapData'
-                                }
-                            }
-                        ]
-                        resData = cmo.finding_aggregate("complianceApproverSaver",arra)['data'][0]
-                        notKeyExist= []
-                        notMatchLength = []
-                        for key,value in setObj.items():
-                            if key not in list(resData.keys()):
-                                notKeyExist.append(key)   
-                        if len(notKeyExist):
-                            return respond({"status":400,"msg":f"Please upload snap on Field Name -- {','.join(notKeyExist)} ","icon":"error"})
-                    
-                        for key,value in setObj.items():
-                            expected_length = int(value)
-                            actual_length = len(resData[key]['images'])
-                            if actual_length != expected_length:
-                                notMatchLength.append(key)
-                        if len(notMatchLength):
-                            return respond({"status":400,"msg":f"Please upload All snap on Field Name -- {','.join(notMatchLength)} ","icon":"error"})
-                    else:
-                        return respond({
-                        'status':400,
-                        "icon":"error",
-                        "msg":"To close a Dismantle Task, you must first complete and close the Survey Task and the SRQ Raise Task"
-                    })
-            
-        else:
-            checkingArray= {
-                    "TemplateData": "Template data is not available.",
-                    "PlanDetailsData": "Plan details are missing at the moment.",
-                    "SiteDetailsData": "Site details are not available right now.",
-                    "RanCheckListData": "Ran checklist data is not present.",
-                    "SnapData": "Snap data is currently missing.",
-                    "AcceptanceLogData": "Acceptance log data is not available."
-            }
-            arra = [
-                {
-                    '$match': {
-                        '_id': ObjectId(closedData['siteuid'])
-                    }
-                }, {
-                    '$addFields': {
-                        'SubProjectId': {
-                            '$toObjectId': '$SubProjectId'
-                        }
-                    }
-                }, {
-                    '$lookup': {
-                        'from': 'complianceForm', 
-                        'let': {
-                            'subProjectId': '$SubProjectId', 
-                            'activity': {
-                                '$trim':{
-                                    'input':'$ACTIVITY'
-                                }
-                            }, 
-                            'oem': {
-                                '$trim':{
-                                    'input':'$OEM NAME'
-                                }
-                            },
-                            'mName': closedData['mName']
-                        }, 
-                        'pipeline': [
-                            {
-                                '$match':{
-                                    'deleteStatus':{'$ne':1}
-                                }
-                            }, {
-                                '$addFields':{
-                                    'activity':{
-                                        '$trim':{
-                                            'input':'$activity'
-                                        }
-                                    },
-                                    'oem':{
-                                        '$trim':{
-                                            'input':'$oem'
-                                        }
-                                    },
-                                    'complianceMilestone':{
-                                        '$trim':{
-                                            'input':'$complianceMilestone'
-                                        }
-                                    },
-                                }
-                            }, {
-                                '$match': {
-                                    '$expr': {
-                                        '$and': [
-                                            {
-                                                '$eq': [
-                                                    '$subProject', '$$subProjectId'
-                                                ]
-                                            }, {
-                                                '$eq': [
-                                                    '$activity', '$$activity'
-                                                ]
-                                            }, {
-                                                '$eq': [
-                                                    '$oem', '$$oem'
-                                                ]
-                                            }, {
-                                                '$eq': [
-                                                    '$complianceMilestone', '$$mName'
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                }
-                            },
-                        ], 
-                        'as': 'result'
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$result', 
-                        'preserveNullAndEmptyArrays': True
-                    }
-                }, {
-                    '$project': {
-                        '_id': 0, 
-                        'snap':'$result.snap',
-                        "Template":'$result.Template',
-                        "planDetails":'$result.planDetails',
-                        "siteDetails":'$result.siteDetails',
-                        "ranChecklist":'$result.ranChecklist',
-                        "acceptanceLog":'$result.acceptanceLog',
-                    }
-                }
-            ]
-            response = cmo.finding_aggregate("SiteEngineer", arra)
-            if not len(response['data']):
-                return respond({"status":400,"msg":"please provide valid id ","icon":"error"})
-        
-            checkingArrayKey = list(response['data'][0].keys())
-            replacement = {
-                'snap': 'SnapData',
-                'Template': 'TemplateData',
-                'planDetails': 'PlanDetailsData',
-                'siteDetails': 'SiteDetailsData',
-                'ranChecklist': 'RanCheckListData',
-                'acceptanceLog': 'AcceptanceLogData',
-            }
-        
-            checkingArrayKey = [replacement[item] if item in replacement else item for item in checkingArrayKey]
-        
-        
-            arra = [
-                {
-                    '$match':{
-                        'siteuid':ObjectId(closedData['siteuid']),
-                        "milestoneuid":ObjectId(id),
-                    }
-                }, {
-                    "$addFields":{
-                        "_id":{"$toString":"$_id"}
-                    }
-                }
-            ]
-            fetchCASData=cmo.finding_aggregate("complianceApproverSaver",arra)
-        
-            if not len(fetchCASData['data']):
-                return respond({"status":400,"msg":"Please fill Complete--> 'Forms & Checklist'","icon":"error"}) 
-            globalSaverId = fetchCASData['data'][0]['_id']
-            notKeyExist= []
-            for key in checkingArrayKey:
-                if key not in list(fetchCASData['data'][0].keys()):
-                    notKeyExist.append(checkingArray[key])
-             
-            if len(notKeyExist):
-                return respond({"status":400,"msg":f"Please fill This Tab -- {','.join(notKeyExist)} Data ","icon":"error"})
-            if "SnapData" in checkingArrayKey:
-                for item in response['data'][0]['snap']:
-                    if item['fieldName'] not in list(fetchCASData['data'][0]['SnapData'].keys()):
-                        notKeyExist.append(item['fieldName'])
-                if len(notKeyExist):
-                    return respond({"status":400,"msg":f"Please upload at least one snap on fieldName -- {','.join(notKeyExist)} ","icon":"error"})
-    
     arra = [
         {
             '$match': {
                 '_id': ObjectId(id)
             }
-        }, {
-            '$addFields': {
-                'SubProjectId': {
-                    '$toObjectId': '$SubProjectId'
-                }
-            }
-        }, {
-            '$lookup': {
-                'from': 'projectType', 
-                'localField': 'SubProjectId', 
-                'foreignField': '_id', 
-                'pipeline': [
-                    {
-                        '$match': {
-                            'deleteStatus': {
-                                '$ne': 1
-                            }
-                        }
-                    }
-                ], 
-                'as': 'result'
-            }
-        }, {
-            '$unwind': {
-                'path': '$result', 
-                'preserveNullAndEmptyArrays': True
-            }
-        }, {
-            '$addFields': {
-                'PprojectType': '$result.projectType'
+        },{
+            '$project':{
+                "_id":0
             }
         }
     ]
     respw = cmo.finding_aggregate("milestone",arra)["data"][0]
-    mappedDta = cmo.finding("mappedData",{"projectTypeName": respw["PprojectType"], "milestoneName": respw["Name"]})["data"]
+    if respw['mileStoneStatus'] == "Closed":
+        return respond({
+            'status':400,
+            "icon":"error",
+            "msg":"This Task is Already Closed"
+        })
+    mappedDta = cmo.finding("mappedMilestone",{"subProject": ObjectId(respw["SubProjectId"]), "milestoneName": respw["Name"]})["data"]
     
 
     respwin = {}
     itsWork = False
 
     
-    if respw['Name'] == "Revenue Recognition":
-        return respond(
-                {
-                    "status": 400,
-                    "msg": f"Revenue Recognition Can't be closed manually!",
-                    "icon": "error",
-                    "data": [],
-                }
-            )
+    # if respw['Name'] == "Revenue Recognition":
+    #     return respond(
+    #             {
+    #                 "status": 400,
+    #                 "msg": f"Revenue Recognition Can't be closed manually!",
+    #                 "icon": "error",
+    #                 "data": [],
+    #             }
+    #         )
                     
                  
-    if respw["Name"] == "MS2":
+    # if respw["Name"] == "MS2":
         
-        respwin = cmo.finding("milestone",{"siteId": respw["siteId"], "Name": "MS1"})["data"]
-        if (len(respwin)):
-            respwin = respwin[0]
-            completion_date = respwin.get('CC_Completion Date')
-            if isinstance(completion_date, dict) and '$date' in completion_date:
-                completion_date = completion_date['$date']
-            elif isinstance(completion_date, str):
-                completion_date = completion_date
-            if (respwin["mileStoneStatus"] == "Closed"):
-                data = dict(data)
-                data["mileStoneEndDate"] = parser.isoparse(data["CC_Completion Date"])
-                respwin["CC_Completion Date"] = parser.isoparse(completion_date)
+    #     respwin = cmo.finding("milestone",{"siteId": respw["siteId"], "Name": "MS1"})["data"]
+    #     if (len(respwin)):
+    #         respwin = respwin[0]
+    #         completion_date = respwin.get('CC_Completion Date')
+    #         if isinstance(completion_date, dict) and '$date' in completion_date:
+    #             completion_date = completion_date['$date']
+    #         elif isinstance(completion_date, str):
+    #             completion_date = completion_date
+    #         if (respwin["mileStoneStatus"] == "Closed"):
+    #             data = dict(data)
+    #             data["mileStoneEndDate"] = parser.isoparse(data["CC_Completion Date"])
+    #             respwin["CC_Completion Date"] = parser.isoparse(completion_date)
                 
-                if data["mileStoneEndDate"] < respwin["CC_Completion Date"]:
-                    return respond(
-                        {
-                            "status": 400,
-                            "msg": f"MS2 can't be close before MS1 Completion Date...",
-                            "icon": "error",
-                            "data": [],
-                        }
-                    )
-                else:
+    #             if data["mileStoneEndDate"] < respwin["CC_Completion Date"]:
+    #                 return respond(
+    #                     {
+    #                         "status": 400,
+    #                         "msg": f"MS2 can't be close before MS1 Completion Date...",
+    #                         "icon": "error",
+    #                         "data": [],
+    #                     }
+    #                 )
+    #             else:
 
-                    itsWork = True
-            else:
-                return respond(
-                    {
-                        "status": 400,
-                        "msg": f"Predecessor ``{respwin['Name']}`` is open",
-                        "icon": "error",
-                        "data": [],
-                    }
-                )
-        else:
-            return respond({
-                'status':400,
-                "icon":"error",
-                "msg":"The MS1 is not found for this site ID, so you can't close MS2."
-            })        
+    #                 itsWork = True
+    #         else:
+    #             return respond(
+    #                 {
+    #                     "status": 400,
+    #                     "msg": f"Predecessor ``{respwin['Name']}`` is open",
+    #                     "icon": "error",
+    #                     "data": [],
+    #                 }
+    #             )
+    #     else:
+    #         return respond({
+    #             'status':400,
+    #             "icon":"error",
+    #             "msg":"The MS1 is not found for this site ID, so you can't close MS2."
+    #         })        
         
-    if respw["Name"] != "Survey" or respw["Name"] == "SACFA Check":
-        if respw["Predecessor"] != "" and respw["Name"] != "MS2":
-            respwin = cmo.finding("milestone",{"siteId": respw["siteId"], "Name": respw["Predecessor"]})["data"]
-            if respwin:
-                respwin = respwin[0]
-                if respwin["mileStoneStatus"] == "Closed":
-                    itsWork = True
-                else:
-                    return respond(
-                        {
-                            "status": 400,
-                            "msg": f"Predecessor ``{respwin['Name']}`` is open",
-                            "icon": "error",
-                            "data": [],
-                        }
-                    )
-            else:
-                return respond({
-                    'status':400,
-                    "icon":"error",
-                    "msg":f'This Predecessor {respw["Predecessor"]} is not match Any MileStone.'
-                })
-        else:
-            itsWork = True
-    if respw["Name"] == "Survey" or respw["Name"] == "SACFA Check":
-        itsWork = True
-    if itsWork:
-        for i in data:
-            if i == "CC_Completion Date":
-                tkn = True
+    # if respw["Name"] != "Survey" or respw["Name"] == "SACFA Check":
+    #     if respw["Predecessor"] != "" and respw["Name"] != "MS2":
+    #         respwin = cmo.finding("milestone",{"siteId": respw["siteId"], "Name": respw["Predecessor"]})["data"]
+    #         if respwin:
+    #             respwin = respwin[0]
+    #             if respwin["mileStoneStatus"] == "Closed":
+    #                 itsWork = True
+    #             else:
+    #                 return respond(
+    #                     {
+    #                         "status": 400,
+    #                         "msg": f"Predecessor ``{respwin['Name']}`` is open",
+    #                         "icon": "error",
+    #                         "data": [],
+    #                     }
+    #                 )
+    #         else:
+    #             return respond({
+    #                 'status':400,
+    #                 "icon":"error",
+    #                 "msg":f'This Predecessor {respw["Predecessor"]} is not match Any MileStone.'
+    #             })
+    #     else:
+    #         itsWork = True
+    # if respw["Name"] == "Survey" or respw["Name"] == "SACFA Check":
+    #     itsWork = True
+    # if itsWork:
+    #     for i in data:
+    #         if i == "CC_Completion Date":
+    #             tkn = True
 
-            resp[i] = data.get(i)
+    #         resp[i] = data.get(i)
+
+    for i in data:
+        if i == "CC_Completion Date":
+            tkn = True
+        resp[i] = data.get(i)
             
             
 
-        if tkn == False:
-            resp["CC_Completion Date"] = ctm.updatedatetimeObj()
+    if tkn == False:
+        resp["CC_Completion Date"] = ctm.new_updatedatetimeObj()
         
 
-        if respw['Name'] == "MS2":
-            if "CC_WCC Signoff Pending Reason" in closedData:
-                updateBy = {"_id": respw["siteId"]}
-                updateData = {"WCC SIGNOFF PENDING REASON":closedData['CC_WCC Signoff Pending Reason']}
-                cmo.updating("SiteEngineer", updateBy, updateData, False)
+    #     if respw['Name'] == "MS2":
+    #         if "CC_WCC Signoff Pending Reason" in closedData:
+    #             updateBy = {"_id": respw["siteId"]}
+    #             updateData = {"WCC SIGNOFF PENDING REASON":closedData['CC_WCC Signoff Pending Reason']}
+    #             cmo.updating("SiteEngineer", updateBy, updateData, False)
             
-        if "Checklist" not in closedData:
-            if len(mappedDta) > 0:
+    #     if "Checklist" not in closedData:
+    #         if len(mappedDta) > 0:
 
-                updationbyS = {"_id": respw["siteId"]}
-                updationDataS = {mappedDta[0]["headerName"]: resp["CC_Completion Date"]}
-                cmo.updating("SiteEngineer", updationbyS, updationDataS, False)
-            arra = [
-                {
-                    '$match':{
-                        'siteId':ObjectId(respw["siteId"]),
-                        'mileStoneStatus':"Open"
-                    }
-                }
-            ]
-            response = cmo.finding_aggregate("milestone",arra)['data']
-            if len(response) == 1:
-                updationData = {
-                    "Site_Completion Date": resp["CC_Completion Date"],
-                    "siteStatus": "Close",
-                }
-                updationby = {"_id": respw["siteId"]}
-                cmo.updating("SiteEngineer", updationby, updationData, False)
+    #             updationbyS = {"_id": respw["siteId"]}
+    #             updationDataS = {mappedDta[0]["trackingField"]: resp["CC_Completion Date"]}
+    #             cmo.updating("SiteEngineer", updationbyS, updationDataS, False)
+    #         arra = [
+    #             {
+    #                 '$match':{
+    #                     'siteId':ObjectId(respw["siteId"]),
+    #                     'mileStoneStatus':"Open"
+    #                 }
+    #             }
+    #         ]
+    #         response = cmo.finding_aggregate("milestone",arra)['data']
+    #         if len(response) == 1:
+    #             updationData = {
+    #                 "Site_Completion Date": resp["CC_Completion Date"],
+    #                 "siteStatus": "Close",
+    #             }
+    #             updationby = {"_id": respw["siteId"]}
+    #             cmo.updating("SiteEngineer", updationby, updationData, False)
                 
-            resp["mileStoneStatus"] = "Closed"
-            resp["Task Closure"] = current_time()
-            if "mileStoneEndDate" in resp:
-                del resp["mileStoneEndDate"]
-            response = cmo.updating("milestone", {"_id": ObjectId(id)}, resp, False)
-            evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Closed")
-            if "formType" in closedData and closedData['formType'] == "Static":
-                setObjForLog={
-                    "userId":ObjectId(current_user['userUniqueId']),
-                    "globalSaverId":ObjectId(globalSaverId),
-                    "type":"",
-                    "Event": "This compliance has been closed by the L2 Approver",
-                    "currentTime":current_time().replace("T"," ")
-                }
-                cmo.insertion("complianceLog",setObjForLog)
-                cmo.updating("complianceApproverSaver",{"milestoneuid":ObjectId(id)},{"currentStatus":"Closed","closedBy":"L2"},False)
-            return respond(response)
-        else:
-            if closedData['projectTypeName'] == "DEGROW" and closedData['subProjectTypeName'] in ['TWIN BEAM','LAYER DEGROW','SECTOR DEGROW','4TR-2TR']:
-                response = cmo.updating("milestone", {"_id": ObjectId(id)}, {'mileStoneStatus':"Closed","Task Closure":current_time()}, False)
-                cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(closedData['siteuid']),"milestoneuid":ObjectId(id)},{'currentStatus':"Closed","formSubmitDate":current_time1()},False)
-                evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Closed")
-                return respond(response)
-            else:
-                response = cmo.updating("milestone", {"_id": ObjectId(id)}, {'mileStoneStatus':"Submit"}, False)
-                cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(closedData['siteuid']),"milestoneuid":ObjectId(id)},{'currentStatus':"Submit","formSubmitDate":current_time1()},False)
-                setObjForLog={
-                    "userId":ObjectId(current_user['userUniqueId']),
-                    "globalSaverId":ObjectId(globalSaverId),
-                    "type":"",
-                    "Event": "This compliance has been submitted by the user and forwarded to L1.",
-                    "currentTime":current_time().replace("T"," ")
-                }
-                cmo.insertion("complianceLog",setObjForLog)
-                evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Submit to L1")
-                return respond(response)
+    #         resp["mileStoneStatus"] = "Closed"
+    #         resp["Task Closure"] = current_time()
+    #         if "mileStoneEndDate" in resp:
+    #             del resp["mileStoneEndDate"]
+    #         response = cmo.updating("milestone", {"_id": ObjectId(id)}, resp, False)
+    #         evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Closed")
+    #         if "formType" in closedData and closedData['formType'] == "Static":
+    #             setObjForLog={
+    #                 "userId":ObjectId(current_user['userUniqueId']),
+    #                 "globalSaverId":ObjectId(globalSaverId),
+    #                 "type":"",
+    #                 "Event": "This compliance has been closed by the L2 Approver",
+    #                 "currentTime":current_time().replace("T"," ")
+    #             }
+    #             cmo.insertion("complianceLog",setObjForLog)
+    #             cmo.updating("complianceApproverSaver",{"milestoneuid":ObjectId(id)},{"currentStatus":"Closed","closedBy":"L2"},False)
+    #         return respond(response)
+    #     else:
+    #         if closedData['projectTypeName'] == "DEGROW" and closedData['subProjectTypeName'] in ['TWIN BEAM','LAYER DEGROW','SECTOR DEGROW','4TR-2TR']:
+    #             response = cmo.updating("milestone", {"_id": ObjectId(id)}, {'mileStoneStatus':"Closed","Task Closure":current_time()}, False)
+    #             cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(closedData['siteuid']),"milestoneuid":ObjectId(id)},{'currentStatus':"Closed","formSubmitDate":current_time1()},False)
+    #             evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Closed")
+    #             return respond(response)
+    #         else:
+    #             response = cmo.updating("milestone", {"_id": ObjectId(id)}, {'mileStoneStatus':"Submit"}, False)
+    #             cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(closedData['siteuid']),"milestoneuid":ObjectId(id)},{'currentStatus':"Submit","formSubmitDate":current_time1()},False)
+    #             setObjForLog={
+    #                 "userId":ObjectId(current_user['userUniqueId']),
+    #                 "globalSaverId":ObjectId(globalSaverId),
+    #                 "type":"",
+    #                 "Event": "This compliance has been submitted by the user and forwarded to L1.",
+    #                 "currentTime":current_time().replace("T"," ")
+    #             }
+    #             cmo.insertion("complianceLog",setObjForLog)
+    #             evl.newMileStone(id, current_user["userUniqueId"],respw['projectuniqueId'],respw['Name'],str(respw['siteId']),msg="MileStone Submit to L1")
+    #             return respond(response)
+
+    if mappedDta:
+        updationbyS = {"_id": respw["siteId"]}
+        updationDataS = {mappedDta[0]["trackingField"]: resp["CC_Completion Date"]}
+        cmo.updating("SiteEngineer", updationbyS, updationDataS, False)
+
+    arra = [
+        {
+            '$match':{
+                'siteId':ObjectId(respw["siteId"]),
+                'mileStoneStatus':"Open"
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("milestone",arra)['data']
+    if len(response) == 1:
+        updationData = {
+            # "Site_Completion Date": resp["CC_Completion Date"],
+            "siteStatus": "Close",
+        }
+        updationby = {"_id": respw["siteId"]}
+        cmo.updating("SiteEngineer", updationby, updationData, False)
+        
+    resp["mileStoneStatus"] = "Closed"
+    resp["Task Closure"] = new_current_time()
+    response = cmo.updating("milestone", {"_id": ObjectId(id)}, resp, False)
+    return respond(response)
+
+
             
             
     
@@ -2493,21 +2195,49 @@ def changeTaskStatus(current_user, id=None):
         data = {"mileStoneStatus": "Open"}
         unset = {"CC_Completion Date": "","Task Closure":""}
 
-        cmo.updating("milestone", uniwq, data, False, unset)
+        arra = [
+            {
+                '$match':{
+                    '_id':ObjectId(id)
+                }
+            }
+        ]
+        response = cmo.finding_aggregate("milestone",arra)['data']
+        if response:
+            response = response[0]
 
-        ressp = cmo.finding("milestone", uniwq)["data"][0]["siteId"]["$oid"]
+            arra = [
+                {
+                    '$match':{
+                        'subProject':ObjectId(response['SubProjectId']),
+                        "milestoneName":response['Name']
+                    }
+                }
+            ]
+            mappedData = cmo.finding_aggregate("mappedMilestone",arra)['data']
 
-        uniwq = {"_id": ObjectId(ressp)}
+            cmo.updating("milestone", uniwq, data, False, unset)
 
-        data = {
-            "siteStatus": "Open",
-        }
+            ressp = cmo.finding("milestone", uniwq)["data"][0]["siteId"]["$oid"]
 
-        unset = {"Site_Completion Date": ""}
-        resp = cmo.updating("SiteEngineer", uniwq, data, False, unset)
-        # evl.milestoneCloseLogs(id, current_user["userUniqueId"], "milestone", "Open")
-        cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(ressp),"milestoneuid":ObjectId(id)},{'currentStatus':'Open'},False,{'formSubmitDate':1,'L1ActionDate':1,"L2ActionDate":1})
-        return respond(resp)
+            uniwq = {"_id": ObjectId(ressp)}
+
+            data = {
+                "siteStatus": "Open",
+            }
+
+            unset = {"Site_Completion Date": ""}
+            if mappedData:
+                unset[mappedData[0]['trackingField']] = ""
+            resp = cmo.updating("SiteEngineer", uniwq, data, False, unset)
+            cmo.updating("complianceApproverSaver",{"siteuid":ObjectId(ressp),"milestoneuid":ObjectId(id)},{'currentStatus':'In Process'},False,{'formSubmitDate':1,'L1ActionDate':1,"L2ActionDate":1})
+            return respond(resp)
+        else:
+            return respond({
+                'status':400,
+                "icon":"error",
+                "msg":"Something went wrong"
+            })
 
     if request.method == "DELETE":
         data = {"deleteStatus": 1}
@@ -3692,57 +3422,21 @@ def milestoneeventlog(id=None):
         return respond(response)
  
 
-@project_blueprint.route("/mappedData/<projectuid>", methods=["GET"])
-def mapped_data(projectuid=None):
+@project_blueprint.route("/mappedData/<SubProjectId>", methods=["GET"])
+def mapped_data(SubProjectId=None):
     arra = [
         {
             '$match': {
-                '_id': ObjectId(projectuid)
+                'subProject': ObjectId(SubProjectId)
             }
         }, {
-            '$lookup': {
-                'from': 'projectType', 
-                'localField': 'projectType', 
-                'foreignField': '_id', 
-                'pipeline': [
-                    {
-                        '$match': {
-                            'deleteStatus': {
-                                '$ne': 1
-                            }
-                        }
-                    }
-                ], 
-                'as': 'result'
-            }
-        }, {
-            '$unwind': {
-                'path': '$result', 
-                'preserveNullAndEmptyArrays': True
-            }
-        }, {
-            '$addFields': {
-                'projectType': '$result.projectType'
+            '$project':{
+                'trackingField':1,
+                "_id":0
             }
         }
     ]
-    response = cmo.finding_aggregate("project",arra)['data'][0]
-    projectTypeName = response['projectType']
-    
-    
-    
-    arra = [
-        {
-            '$match': {
-                'projectTypeName': projectTypeName
-            }
-        }, {
-            '$project': {
-                '_id': 0
-            }
-        }
-    ]
-    response = cmo.finding_aggregate("mappedData",arra)
+    response = cmo.finding_aggregate("mappedMilestone",arra)
     return respond(response)
 
 

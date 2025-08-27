@@ -2968,28 +2968,9 @@ def AdminSubTypeName(current_user):
                     '_id': ObjectId(subId),
                 }
             }, {
-                '$unwind': {
-                    'path': '$t_sengg',
-                    'preserveNullAndEmptyArrays': True
-                }
-            }, {
-                '$addFields': {
-                    'fieldName': '$t_sengg.fieldName',
-                    'dropdownValue': '$t_sengg.dropdownValue'
-                }
-            }, {
-                '$match': {
-                    'fieldName': {
-                        '$in': [
-                            'ACTIVITY', 'OEM NAME'
-                        ]
-                    }
-                }
-            }, {
                 '$project': {
-                    'fieldName': 1,
                     'MileStone': 1,
-                    'dropdownValue': 1,
+                    't_tracking':1,
                     '_id': 0
                 }
             }
@@ -3058,8 +3039,6 @@ def AdminSubTypeName(current_user):
                 }
             }
         ]
-    print(arra,'arraarraarraarraarra')
-    
     fetchData = cmo.finding_aggregate("projectType", arra)
     return respond(fetchData)
 
@@ -5123,519 +5102,989 @@ def add_snap_sample():
     # return respond(response)
 
     allData = {
+        # "snap": [
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S1: Cabinet is properly mounted & secured on wall/pole and acceciable to technician",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 1,
+        #     "image":"uploads/S1.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S2: IP 55 Cabinet Filter( whereever appicable) are in place and properly cleaned",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 2,
+        #     "image":"uploads/S2.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S3: Base Station is securely installed & is perfect at Horizontal/vertical position",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 3,
+        #     "image":"uploads/S3.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S4: IP seals /plugs must be installed in all module",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 4,
+        #     "image":"uploads/S4.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S5: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 5,
+        #     "image":"uploads/S5.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S5a: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 6
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S5b: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 7
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S6: BBU and DCDU are grounded to EGB or Tower leg",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 8,
+        #     "image":"uploads/S6.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S7: 1st sector RRU is grounded and the grounding cable of RRUs",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 9,
+        #     "image":"uploads/S7.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S7a: 1st sector RRU is grounded and the grounding cable of RRUs",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 10
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S7b: 1st sector RRU is grounded and the grounding cable of RRUs",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 11
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S8: RRU power cables are arranged in neat and straight way without any crossing",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 12,
+        #     "image":"uploads/S8.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S8a: RRU power cables are arranged in neat and straight way without any crossing",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 13
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S8b: RRU power cables are arranged in neat and straight way without any crossing",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 14
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S9: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 15,
+        #     "image":"uploads/S9.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S9a: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 16
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S9b: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 17
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S10: CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 18
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S11: CPRI/eCPRI Routing at AMOB/ACOC end (Labelling should be clearly Visible)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 19,
+        #     "image":"uploads/S11.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S12: CPRI/eCPRI connectivity at ABIx end in AMOB/AMIA",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 20,
+        #     "image":"uploads/S12.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S13: Invertor Make and Model (Small Cell)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 21
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S14: The Optical / Ethernet Lan cables are routed and connected securely at BBU",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 22,
+        #     "image":"uploads/S14.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S15: CPRI cables of sector RRU are arranged in neat and straight way",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 23,
+        #     "image":"uploads/S15.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S15a: CPRI cables of sector RRU are arranged in neat and straight way",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 24
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S15b: CPRI cables of sector RRU are arranged in neat and straight way",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 25
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S16: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 26,
+        #     "image":"uploads/S16.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S16a: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 27
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S16b: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 28
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S17: Conduit used for Fiber cable properly",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 29
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S18: GPS antenna and cable installed properly",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 30,
+        #     "image":"uploads/S18.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S19: TMA/Combiner/Duplexer/Triplexer",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 31
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S20: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 32,
+        #     "image":"uploads/S20.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S20a: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 33
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S20b: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 34
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S21: GGSM Installation Showing Jumper Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 35,
+        #     "image":"uploads/S21.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S21a: GGSM Installation Showing Jumper Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 36
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S21b: GGSM Installation Showing Jumper Weather Proofing & Labeling",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 37
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S22: Site access is safe and as per OHS",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 38,
+        #     "image":"uploads/S22.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S22a: Site access is safe and as per OHS",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 39
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S22b: Site access is safe and as per OHS",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 40
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S23: EMF Signage Board",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 41,
+        #     "image":"uploads/S23.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S23a: EMF Signage Board",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 42
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S23b: EMF Signage Board",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 43
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S24: Site Clean",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 44,
+        #     "image":"uploads/S24.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S24a: Site Clean",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 45
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S24b: Site Clean",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 46
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S25: Complete Site View",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 47,
+        #     "image":"uploads/S25.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S25a: Complete Site View",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 48
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S25b: Complete Site View",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 49
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S26: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 50,
+        #     "image":"uploads/S26.jpeg"
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S26a: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 51
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S26b: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 52
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S27: 1st Sector GSM Installation Make and Model",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 53
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S27a: 1st Sector GSM Installation Make and Model",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 54
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S27b: 1st Sector GSM Installation Make and Model",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 55
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S28: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 56
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S28a: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 57
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S28b: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 58
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S29: Cable connectivity inside FODA (Open View)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 59
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S29a: Cable connectivity inside FODA (Open View)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 60
+        #     },
+        #     {
+        #     "dataType": "Text",
+        #     "Status": "Active",
+        #     "fieldName": "S29b: Cable connectivity inside FODA (Open View)",
+        #     "required": "Yes",
+        #     "childView": False,
+        #     "index": 61
+        #     }
+
+        # ]
+
         "snap": [
             {
             "dataType": "Text",
+            "required": "Yes",
             "Status": "Active",
             "fieldName": "S1: Cabinet is properly mounted & secured on wall/pole and acceciable to technician",
-            "required": "Yes",
             "childView": False,
             "index": 1,
             "image":"uploads/S1.jpeg"
             },
             {
             "dataType": "Text",
+            "required": "Yes",
             "Status": "Active",
             "fieldName": "S2: IP 55 Cabinet Filter( whereever appicable) are in place and properly cleaned",
-            "required": "Yes",
             "childView": False,
             "index": 2,
             "image":"uploads/S2.jpeg"
             },
             {
             "dataType": "Text",
+            "required": "Yes",
             "Status": "Active",
             "fieldName": "S3: Base Station is securely installed & is perfect at Horizontal/vertical position",
-            "required": "Yes",
             "childView": False,
             "index": 3,
             "image":"uploads/S3.jpeg"
             },
             {
             "dataType": "Text",
+            "required": "Yes",
             "Status": "Active",
             "fieldName": "S4: IP seals /plugs must be installed in all module",
-            "required": "Yes",
             "childView": False,
             "index": 4,
             "image":"uploads/S4.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S5: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S5 A: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "childView": False,
             "index": 5,
             "image":"uploads/S5.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S5a: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S5 B: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "childView": False,
-            "index": 6
+            "index": 6,
+            "image":"uploads/S5.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S5b: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S5 C: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "childView": False,
-            "index": 7
+            "index": 7,
+            "image":"uploads/S5.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S6: BBU and DCDU are grounded to EGB or Tower leg",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S5 D: RRU Installation Showing GND Jumper Clamping Weather Proofing & Labeling",
             "childView": False,
             "index": 8,
+            "image":"uploads/S5.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S6: BBU and DCDU are grounded to EGB or Tower leg",
+            "childView": False,
+            "index": 9,
             "image":"uploads/S6.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S7: 1st sector RRU is grounded and the grounding cable of RRUs",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S7 A : 1st sector RRU is grounded and the grounding cable of RRUs",
             "childView": False,
-            "index": 9,
+            "index": 10,
             "image":"uploads/S7.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S7a: 1st sector RRU is grounded and the grounding cable of RRUs",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S7 B : 1st sector RRU is grounded and the grounding cable of RRUs",
             "childView": False,
-            "index": 10
+            "index": 11,
+            "image":"uploads/S7.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S7b: 1st sector RRU is grounded and the grounding cable of RRUs",
             "required": "Yes",
-            "childView": False,
-            "index": 11
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
-            "fieldName": "S8: RRU power cables are arranged in neat and straight way without any crossing",
-            "required": "Yes",
+            "fieldName": "S7 C : 1st sector RRU is grounded and the grounding cable of RRUs",
             "childView": False,
             "index": 12,
+            "image":"uploads/S7.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S7 D : 1st sector RRU is grounded and the grounding cable of RRUs",
+            "childView": False,
+            "index": 13,
+            "image":"uploads/S7.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S8 A : RRU power cables are arranged in neat and straight way without any crossing",
+            "childView": False,
+            "index": 14,
             "image":"uploads/S8.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S8a: RRU power cables are arranged in neat and straight way without any crossing",
             "required": "Yes",
-            "childView": False,
-            "index": 13
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
-            "fieldName": "S8b: RRU power cables are arranged in neat and straight way without any crossing",
-            "required": "Yes",
-            "childView": False,
-            "index": 14
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S9: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
-            "required": "Yes",
+            "fieldName": "S8 B : RRU power cables are arranged in neat and straight way without any crossing",
             "childView": False,
             "index": 15,
+            "image":"uploads/S8.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S8 C : RRU power cables are arranged in neat and straight way without any crossing",
+            "childView": False,
+            "index": 16,
+            "image":"uploads/S8.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S8 D : RRU power cables are arranged in neat and straight way without any crossing",
+            "childView": False,
+            "index": 17,
+            "image":"uploads/S8.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S9 A :CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
+            "childView": False,
+            "index": 18,
             "image":"uploads/S9.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S9a: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
             "required": "Yes",
-            "childView": False,
-            "index": 16
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
-            "fieldName": "S9b: CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
-            "required": "Yes",
-            "childView": False,
-            "index": 17
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S10: CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
-            "required": "Yes",
-            "childView": False,
-            "index": 18
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S11: CPRI/eCPRI Routing at AMOB/ACOC end (Labelling should be clearly Visible)",
-            "required": "Yes",
+            "fieldName": "S9 B :CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
             "childView": False,
             "index": 19,
-            "image":"uploads/S11.jpeg"
+            "image":"uploads/S9.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S12: CPRI/eCPRI connectivity at ABIx end in AMOB/AMIA",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S9 C :CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
             "childView": False,
             "index": 20,
-            "image":"uploads/S12.jpeg"
+            "image":"uploads/S9.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S13: Invertor Make and Model (Small Cell)",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S9 D :CPRI - FO Cable looped in ring at least 2-3 times at RRU end",
             "childView": False,
-            "index": 21
+            "index": 21,
+            "image":"uploads/S9.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S14: The Optical / Ethernet Lan cables are routed and connected securely at BBU",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S10 A :CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
             "childView": False,
-            "index": 22,
-            "image":"uploads/S14.jpeg"
+            "index": 22
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S15: CPRI cables of sector RRU are arranged in neat and straight way",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S10 B :CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
             "childView": False,
-            "index": 23,
-            "image":"uploads/S15.jpeg"
+            "index": 23
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S15a: CPRI cables of sector RRU are arranged in neat and straight way",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S10 C :CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
             "childView": False,
             "index": 24
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S15b: CPRI cables of sector RRU are arranged in neat and straight way",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S10 D :CPRI/eCPRI - All FO Cable extra length kept/fixed safely (Sector wise)",
             "childView": False,
             "index": 25
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S16: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S11: CPRI/eCPRI Routing at AMOB/ACOC end (Labelling should be clearly Visible)",
             "childView": False,
             "index": 26,
-            "image":"uploads/S16.jpeg"
+            "image":"uploads/S11.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S16a: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S12: CPRI/eCPRI connectivity at ABIx end in AMOB/AMIA",
             "childView": False,
-            "index": 27
+            "index": 27,
+            "image":"uploads/S12.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S16b: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S13: Invertor Make and Model (Small Cell)",
             "childView": False,
             "index": 28
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S17: Conduit used for Fiber cable properly",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S14: The Optical / Ethernet Lan cables are routed and connected securely at BBU",
             "childView": False,
-            "index": 29
+            "index": 29,
+            "image":"uploads/S14.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S18: GPS antenna and cable installed properly",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S15 A :CPRI cables of sector RRU are arranged in neat and straight way",
             "childView": False,
             "index": 30,
+            "image":"uploads/S15.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S15 B :CPRI cables of sector RRU are arranged in neat and straight way",
+            "childView": False,
+            "index": 31,
+            "image":"uploads/S15.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S15 C :CPRI cables of sector RRU are arranged in neat and straight way",
+            "childView": False,
+            "index": 32,
+            "image":"uploads/S15.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S15 D :CPRI cables of sector RRU are arranged in neat and straight way",
+            "childView": False,
+            "index": 33,
+            "image":"uploads/S15.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S16: Cables are routed properly inside and outside the cabinet and bound with ties with uniform spacing & moderate tightness",
+            "childView": False,
+            "index": 34,
+            "image":"uploads/S16.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S17: Conduit used for Fiber cable properly",
+            "childView": False,
+            "index": 35
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S18: GPS antenna and cable installed properly",
+            "childView": False,
+            "index": 36,
             "image":"uploads/S18.jpeg"
             },
             {
             "dataType": "Text",
+            "required": "Yes",
             "Status": "Active",
             "fieldName": "S19: TMA/Combiner/Duplexer/Triplexer",
-            "required": "Yes",
-            "childView": False,
-            "index": 31
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S20: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
-            "required": "Yes",
-            "childView": False,
-            "index": 32,
-            "image":"uploads/S20.jpeg"
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S20a: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
-            "required": "Yes",
-            "childView": False,
-            "index": 33
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S20b: Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
-            "required": "Yes",
-            "childView": False,
-            "index": 34
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S21: GGSM Installation Showing Jumper Weather Proofing & Labeling",
-            "required": "Yes",
-            "childView": False,
-            "index": 35,
-            "image":"uploads/S21.jpeg"
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S21a: GGSM Installation Showing Jumper Weather Proofing & Labeling",
-            "required": "Yes",
-            "childView": False,
-            "index": 36
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S21b: GGSM Installation Showing Jumper Weather Proofing & Labeling",
-            "required": "Yes",
             "childView": False,
             "index": 37
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S22: Site access is safe and as per OHS",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S20 A :Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
             "childView": False,
             "index": 38,
+            "image":"uploads/S20.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S20 B :Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+            "childView": False,
+            "index": 39,
+            "image":"uploads/S20.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S20 C :Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+            "childView": False,
+            "index": 40,
+            "image":"uploads/S20.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S20 D :Obstructions if any ( Optimization purpose) Antenna Clamp should not be blocked to allow Antenna for proper optimization (+/-30 Degree)",
+            "childView": False,
+            "index": 41,
+            "image":"uploads/S20.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S21 A :GGSM Installation Showing Jumper Weather Proofing & Labeling",
+            "childView": False,
+            "index": 42,
+            "image":"uploads/S21.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S21 B :GGSM Installation Showing Jumper Weather Proofing & Labeling",
+            "childView": False,
+            "index": 43,
+            "image":"uploads/S21.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S21 C :GGSM Installation Showing Jumper Weather Proofing & Labeling",
+            "childView": False,
+            "index": 44,
+            "image":"uploads/S21.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S21 D :GGSM Installation Showing Jumper Weather Proofing & Labeling",
+            "childView": False,
+            "index": 45,
+            "image":"uploads/S21.jpeg"
+            },
+            {
+            "dataType": "Text",
+            "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S22: Site access is safe and as per OHS",
+            "childView": False,
+            "index": 46,
             "image":"uploads/S22.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S22a: Site access is safe and as per OHS",
             "required": "Yes",
-            "childView": False,
-            "index": 39
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S22b: Site access is safe and as per OHS",
-            "required": "Yes",
-            "childView": False,
-            "index": 40
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
             "fieldName": "S23: EMF Signage Board",
-            "required": "Yes",
             "childView": False,
-            "index": 41,
+            "index": 47,
             "image":"uploads/S23.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S23a: EMF Signage Board",
             "required": "Yes",
-            "childView": False,
-            "index": 42
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S23b: EMF Signage Board",
-            "required": "Yes",
-            "childView": False,
-            "index": 43
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
             "fieldName": "S24: Site Clean",
-            "required": "Yes",
             "childView": False,
-            "index": 44,
+            "index": 48,
             "image":"uploads/S24.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S24a: Site Clean",
             "required": "Yes",
-            "childView": False,
-            "index": 45
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S24b: Site Clean",
-            "required": "Yes",
-            "childView": False,
-            "index": 46
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
             "fieldName": "S25: Complete Site View",
-            "required": "Yes",
             "childView": False,
-            "index": 47,
+            "index": 49,
             "image":"uploads/S25.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S25a: Complete Site View",
             "required": "Yes",
-            "childView": False,
-            "index": 48
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S25b: Complete Site View",
-            "required": "Yes",
-            "childView": False,
-            "index": 49
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
             "fieldName": "S26: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
-            "required": "Yes",
             "childView": False,
             "index": 50,
             "image":"uploads/S26.jpeg"
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S26a: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S27: 1st Sector GSM Installation Make and Model",
             "childView": False,
             "index": 51
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S26b: Submit Photograph of Alarm patch panel showing alarm extension ( Both cable from BTS and INFRA and interconnection) and labelling on both side in Physical AT",
             "required": "Yes",
+            "Status": "Active",
+            "fieldName": "S28: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
             "childView": False,
             "index": 52
             },
             {
             "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S27: 1st Sector GSM Installation Make and Model",
             "required": "Yes",
-            "childView": False,
-            "index": 53
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S27a: 1st Sector GSM Installation Make and Model",
-            "required": "Yes",
-            "childView": False,
-            "index": 54
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S27b: 1st Sector GSM Installation Make and Model",
-            "required": "Yes",
-            "childView": False,
-            "index": 55
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S28: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
-            "required": "Yes",
-            "childView": False,
-            "index": 56
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S28a: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
-            "required": "Yes",
-            "childView": False,
-            "index": 57
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S28b: Cable entry FODA end (Closed View Labelling should be clearly Visible)",
-            "required": "Yes",
-            "childView": False,
-            "index": 58
-            },
-            {
-            "dataType": "Text",
             "Status": "Active",
             "fieldName": "S29: Cable connectivity inside FODA (Open View)",
-            "required": "Yes",
             "childView": False,
-            "index": 59
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S29a: Cable connectivity inside FODA (Open View)",
-            "required": "Yes",
-            "childView": False,
-            "index": 60
-            },
-            {
-            "dataType": "Text",
-            "Status": "Active",
-            "fieldName": "S29b: Cable connectivity inside FODA (Open View)",
-            "required": "Yes",
-            "childView": False,
-            "index": 61
+            "index": 53
             }
         ]
-
     }
     for i in id_list:
         cmo.updating("complianceForm",{'_id':ObjectId(i)},allData,False)
@@ -7797,3 +8246,134 @@ def getProjectTypeDyform(current_user, id=None, rowId=None):
         ]
         response = cmo.finding_aggregate("projectType", arra)
         return respond(response)
+    
+
+@admin_blueprint.route('/admin/manageMappedMilestone', methods=['GET', "POST"])
+@admin_blueprint.route('/admin/manageMappedMilestone/<id>', methods=["POST","DELETE"])
+@token_required
+def manageMappedMilestone(current_user, id=None):
+
+    if request.method == "GET":
+        arra = [
+            {
+                '$lookup': {
+                    'from': 'customer', 
+                    'localField': 'customer', 
+                    'foreignField': '_id', 
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'deleteStatus': {
+                                    '$ne': 1
+                                }
+                            }
+                        }
+                    ], 
+                    'as': 'customerResult'
+                }
+            }, {
+                '$lookup': {
+                    'from': 'projectType', 
+                    'localField': 'subProject', 
+                    'foreignField': '_id', 
+                    'as': 'subTypeResult'
+                }
+            }, {
+                '$project': {
+                    'customerName': {
+                        '$arrayElemAt': [
+                            '$customerResult.customerName', 0
+                        ]
+                    }, 
+                    'projectTypeName': {
+                        '$arrayElemAt': [
+                            '$subTypeResult.projectType', 0
+                        ]
+                    }, 
+                    'subTypeName': {
+                        '$arrayElemAt': [
+                            '$subTypeResult.subProject', 0
+                        ]
+                    }, 
+                    'customer': {
+                        '$toString': '$customer'
+                    }, 
+                    'projectType': {
+                        '$toString': '$subProject'
+                    }, 
+                    'subProject': {
+                        '$toString': '$subProject'
+                    }, 
+                    'uniqueId': {
+                        '$toString': '$_id'
+                    }, 
+                    'milestoneName': 1, 
+                    'trackingField': 1, 
+                    '_id': 0
+                }
+            }
+        ]
+        arra = arra + apireq.commonarra + apireq.args_pagination(request.args)
+        response = cmo.finding_aggregate("mappedMilestone", arra)
+        return respond(response)
+
+    elif request.method == "POST":
+
+        allData = request.get_json()
+        required_fields = ["customer","projectType","subProject","milestoneName", "trackingField"]
+
+        if id == None:
+            if not all(field in allData for field in required_fields):
+                return respond({
+                    "status": 400,
+                    "icon": "error",
+                    "msg": "Please provide all required fields"
+                })
+            arra = [
+                {
+                    '$match':{
+                        'customer':ObjectId(allData['customer']),
+                        "subProject":ObjectId(allData['subProject']),
+                        "milestoneName":allData['milestoneName']
+                    }
+                }
+            ]
+            response = cmo.finding_aggregate("mappedMilestone",arra)['data']
+            if response:
+                return respond({
+                    'status':400,
+                    "icon":'error',
+                    "msg":"Pair Of Customer,Scope,Sub Scope and Milestone is Already Exist in Database"
+                })
+            insertData = {
+                "customer":ObjectId(allData['customer']),
+                "subProject":ObjectId(allData['subProject']),
+                "milestoneName":allData['milestoneName'],
+                "trackingField":allData['trackingField']
+            }
+            response = cmo.insertion("mappedMilestone", insertData)
+            return respond(response)
+
+        elif id != None:
+            if not all(field in allData for field in required_fields):
+                return respond({
+                    "status": 400,
+                    "icon": "error",
+                    "msg": "Please provide all required fields"
+                })
+            updateData = {
+                "milestoneName":allData['milestoneName'],
+                "trackingField":allData['trackingField']
+            }
+            updateBy = {
+                '_id':ObjectId(id)
+            }
+            response = cmo.updating("mappedMilestone", updateBy, updateData, False)
+            return respond(response)
+
+    elif request.method == "DELETE":
+        if id != None:
+            response = cmo.deleting("mappedMilestone", id, current_user['userUniqueId'])
+            return respond(response)
+        else:
+            return jsonify({"msg": 'Please Provide Valid Unique ID'})

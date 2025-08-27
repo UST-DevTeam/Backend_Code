@@ -52,12 +52,17 @@ def datetimeObj():
     now = datetime.now()
     return now
 
-def updatedatetimeObj():
-    now = datetime.now()
-    india_timezone = pytz.timezone('Asia/Kolkata')
-    now_india = now.replace(tzinfo=pytz.utc).astimezone(india_timezone)
-    formatted_date = now_india.strftime("%Y-%m-%d"+"T00:00:00"+"+05:30")
-    return formatted_date
+# def updatedatetimeObj():
+#     now = datetime.now()
+#     india_timezone = pytz.timezone('Asia/Kolkata')
+#     now_india = now.replace(tzinfo=pytz.utc).astimezone(india_timezone)
+#     formatted_date = now_india.strftime("%Y-%m-%d"+"T00:00:00"+"+05:30")
+#     return formatted_date
+
+def new_updatedatetimeObj():
+    current_time = datetime.now().strftime("%m-%d-%Y")
+    return current_time
+
 
 def timestamp():
     return '{:%m/%d/%Y-%H:%M}'.format(datetime.now())
