@@ -1566,56 +1566,57 @@ def globalSaver(current_user,uniqueId=None):
                             'deleteStatus':{'$ne':1},
                             "_id": ObjectId(oneas)
                         }
-                    }, {
-                        '$lookup': {
-                            'from': 'SiteEngineer', 
-                            'localField': 'siteId', 
-                            'foreignField': '_id', 
-                            'as': 'result'
-                        }
-                    }, {
-                        '$addFields': {
-                            'FA Code': {
-                                '$arrayElemAt': [
-                                    '$result.FA Code', 0
-                                ]
-                            }
-                        }
-                    }, {
-                        '$addFields': {
-                            'Name': {
-                                '$toString': '$Name'
-                            }, 
-                            'FA Code': {
-                                '$toString': '$FA Code'
-                            }
-                        }
-                    }, {
-                        '$addFields': {
-                            'newField': {
-                                '$concat': [
-                                    '$Name', '(', '$FA Code', ')'
-                                ]
-                            }
-                        }
-                    }
+                    }, 
+                    # {
+                    #     '$lookup': {
+                    #         'from': 'SiteEngineer', 
+                    #         'localField': 'siteId', 
+                    #         'foreignField': '_id', 
+                    #         'as': 'result'
+                    #     }
+                    # }, {
+                    #     '$addFields': {
+                    #         'FA Code': {
+                    #             '$arrayElemAt': [
+                    #                 '$result.FA Code', 0
+                    #             ]
+                    #         }
+                    #     }
+                    # }, {
+                    #     '$addFields': {
+                    #         'Name': {
+                    #             '$toString': '$Name'
+                    #         }, 
+                    #         'FA Code': {
+                    #             '$toString': '$FA Code'
+                    #         }
+                    #     }
+                    # }, {
+                    #     '$addFields': {
+                    #         'newField': {
+                    #             '$concat': [
+                    #                 '$Name', '(', '$FA Code', ')'
+                    #             ]
+                    #         }
+                    #     }
+                    # }
                     
                 ]
                 resping = cmo.finding_aggregate("milestone", arra)["data"][0]
-                if resping["mileStoneStatus"] != "Open":
-                    dtwq.append(resping["newField"])
+                if resping["mileStoneStatus"] == "Open":
+                    dtwq.append(oneas)
                 # if "typeAssigned" in resping and resping['typeAssigned'] == "Partner":
                 #     partnerAssignTask.append(resping["newField"])
                     
-            if len(dtwq) > 0:
-                return respond(
-                    {
-                        "status": 400,
-                        "icon": "warning",
-                        "msg": "The Task and Site ID pair cannot be reassigned because it is not in an open status.\n" + ", ".join(dtwq),
-                        "data": [],
-                    }
-                )
+            # if len(dtwq) > 0:
+            #     return respond(
+            #         {
+            #             "status": 400,
+            #             "icon": "warning",
+            #             "msg": "The Task and Site ID pair cannot be reassigned because it is not in an open status.\n" + ", ".join(dtwq),
+            #             "data": [],
+            #         }
+            #     )
                 
             # if len(partnerAssignTask) > 0:
             #     return respond(
@@ -1627,7 +1628,7 @@ def globalSaver(current_user,uniqueId=None):
             #         }
             #     )
 
-            for oneas in uid:
+            for oneas in dtwq:
                 data = {"assignerId": finalData}
                 data['assignDate'] = new_current_time()
                 data['typeAssigned'] = assigningTo
@@ -1785,14 +1786,15 @@ def projectallocationlist(id=None):
                             'deleteStatus': {
                                 '$ne': 1
                             },
-                            'status':"Active"
+                            'status':"Active",
+                            "Employment Type":"Regular",
                         }
                     }, {
                         '$project': {
                             'empName': {
                                 '$toString': '$empName'
                             }, 
-                            'userRole': 1, 
+                            # 'userRole': 1, 
                             'empCode': {
                                 '$toString': '$empCode'
                             }
@@ -1803,45 +1805,46 @@ def projectallocationlist(id=None):
                                 '$toString': '$_id'
                             }
                         }
-                    }, {
-                        '$lookup': {
-                            'from': 'userRole', 
-                            'localField': 'userRole', 
-                            'foreignField': '_id', 
-                            'pipeline': [
-                                {
-                                    '$match': {
-                                        'deleteStatus': {
-                                            '$ne': 1
-                                        }
-                                    }
-                                }
-                            ], 
-                            'as': 'role'
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$role', 
-                            'preserveNullAndEmptyArrays': True
-                        }
-                    }, {
-                        '$addFields': {
-                            'roleName': '$role.roleName'
-                        }
-                    }, {
-                        '$match': {
-                            'roleName': {
-                                '$in': [
-                                    'Project Support', 'Circle Support', 'Field Resource', 'QE', 'Admin', 'Project Manager', 'PMO',"Field Support"
-                                ]
-                            }
-                        }
-                    }, {
-                        '$project': {
-                            'role': 0, 
-                            'userRole': 0
-                        }
-                    }
+                    }, 
+                    # {
+                    #     '$lookup': {
+                    #         'from': 'userRole', 
+                    #         'localField': 'userRole', 
+                    #         'foreignField': '_id', 
+                    #         'pipeline': [
+                    #             {
+                    #                 '$match': {
+                    #                     'deleteStatus': {
+                    #                         '$ne': 1
+                    #                     }
+                    #                 }
+                    #             }
+                    #         ], 
+                    #         'as': 'role'
+                    #     }
+                    # }, {
+                    #     '$unwind': {
+                    #         'path': '$role', 
+                    #         'preserveNullAndEmptyArrays': True
+                    #     }
+                    # }, {
+                    #     '$addFields': {
+                    #         'roleName': '$role.roleName'
+                    #     }
+                    # }, {
+                    #     '$match': {
+                    #         'roleName': {
+                    #             '$in': [
+                    #                 'Project Support', 'Circle Support', 'Field Resource', 'QE', 'Admin', 'Project Manager', 'PMO',"Field Support"
+                    #             ]
+                    #         }
+                    #     }
+                    # }, {
+                    #     '$project': {
+                    #         'role': 0, 
+                    #         'userRole': 0
+                    #     }
+                    # }
                 ], 
                 'as': 'empDetails'
             }
@@ -1899,7 +1902,7 @@ def projectallocationlist(id=None):
                                         'deleteStatus': {
                                             '$ne': 1
                                         }, 
-                                        'type': 'Partner',
+                                        "Employment Type":"Contract",
                                         'status':"Active"
                                     }
                                 }
@@ -1914,10 +1917,10 @@ def projectallocationlist(id=None):
                     }, {
                         '$addFields': {
                             'empName': {
-                                '$toString': '$result.vendorName'
+                                '$toString': '$result.empName'
                             }, 
                             'empCode': {
-                                '$toString': '$result.vendorCode'
+                                '$toString': '$result.empCode'
                             }
                         }
                     }, {
@@ -1955,8 +1958,8 @@ def closeMilestone(current_user, id=None):
     closedData = dict(data)
     resp = {}
     tkn = False
-    
-    
+
+
     arra = [
         {
             '$match': {
@@ -1975,6 +1978,87 @@ def closeMilestone(current_user, id=None):
             "icon":"error",
             "msg":"This Task is Already Closed"
         })
+    
+    if "Form" in closedData and closedData['Form'] == "Yes":
+
+        ftype = {
+            "Survey WCC":"Survey PO",
+            "Signage WCC":"Signage PO",
+            "Revisit GR Approval":"Revisit PO",
+            "Colo WCC":"Colo PO",
+        }
+        dataforSiteUpdation = {
+            "Survey WCC":{
+                'Survey PO#':closedData['poNumber'],
+                "Survey Line#":closedData['itemCode']
+            },
+            "Signage WCC":{
+                'Signage PO#':closedData['poNumber'],
+                "Signage Line#":closedData['itemCode'],
+                "Sigange Count":int(closedData['Sigange Count']),
+            },
+            "Revisit GR Approval":{
+                'Revisit PO#':closedData['poNumber'],
+                "Revisit Line#":closedData['itemCode']
+            },
+            "Colo WCC":{
+                'Colo PO#':closedData['poNumber'],
+                "Colo Line#":closedData['itemCode']
+            },
+        }
+        closedData['qty'] = int(closedData['qty'])
+        arra = [
+            {
+                '$match':{
+                    'poStatus': 'Open',
+                    'market':closedData['market'],
+                    'scope':ftype[closedData['mName']],
+                    'poNumber':closedData['poNumber'],
+                    'itemCode':closedData['itemCode']
+                }
+            }, {
+                '$addFields':{
+                    '_id':{
+                        '$toString':'$_id'
+                    }
+                }
+            }
+        ]
+        response = cmo.finding_aggregate("PoInvoice",arra)['data']
+        if response:
+            response = response[0]
+            opnQty = response['opnQty']
+            if closedData['qty'] >  opnQty:
+                return respond({
+                    'status':400,
+                    "icon":"error",
+                    "msg":"Quantity is not more than the Open Quantity, so please decrease the PO Quantity or change PO accordingly."
+                })
+            else:
+                updateBy = {
+                    '_id':ObjectId(response['_id'])
+                }
+                updateData = {
+                    'usedQty':response['usedQty'] + closedData['qty'],
+                    "opnQty":opnQty - closedData['qty']
+                }
+                if closedData['qty'] == opnQty:
+                    updateData['poStatus'] = 'Closed'
+                cmo.updating("PoInvoice",updateBy,updateData,False)
+                updataData = dataforSiteUpdation[closedData['mName']]
+                cmo.updating("SiteEngineer",{'_id':ObjectId(respw['siteId'])},updataData,False)
+
+        else:
+            return respond({
+                'icon':"error",
+                "status":400,
+                "msg":"This PO and Line Item Is not Found in Database"
+            })
+    
+
+
+
+
     mappedDta = cmo.finding("mappedMilestone",{"subProject": ObjectId(respw["SubProjectId"]), "milestoneName": respw["Name"]})["data"]
     
 
@@ -5685,4 +5769,88 @@ def download_compliance_snap_zip(globalSaverId):
 
     except Exception as e:
         return respond({"status": 500, "icon": "error", "msg": str(e)})
+    
+
+##=========================================================##
+##========================Internal Project ================##
+
+
+
+@project_blueprint.route('/checkPo/<path:market>/<mName>', methods=['GET'])
+@token_required
+def check_po(current_user,market=None,mName=None):
+    if request.method == "GET":
+        ftype = {
+            "Survey WCC":"Survey PO",
+            "Signage WCC":"Signage PO",
+            "Revisit GR Approval":"Revisit PO",
+            "Colo WCC":"Colo PO",
+        }
+
+        arra = [
+            {
+                '$match': {
+                    'poStatus': 'Open', 
+                    'market':market,
+                    'scope': ftype[mName]
+                }
+            }, {
+                '$group': {
+                    '_id': '$poNumber', 
+                    'date': {
+                        '$first': '$poReceivedDate'
+                    }
+                }
+            }, {
+                '$addFields': {
+                    'poNumber': '$_id', 
+                    'date': {
+                        '$dateFromString': {
+                            'dateString': '$date', 
+                            'format': '%m-%d-%Y'
+                        }
+                    }
+                }
+            }, {
+                '$sort': {
+                    'date': -1
+                }
+            }, {
+                '$project': {
+                    'poNumber': 1, 
+                    '_id': 0
+                }
+            }
+        ]
+        response = cmo.finding_aggregate("PoInvoice",arra)
+        return respond(response)
+    
+@project_blueprint.route('/checkLineItem/<path:market>/<mName>/<poNumber>', methods=['GET'])
+@token_required
+def check_line_item(current_user,market=None,mName=None,poNumber=None):
+    if request.method == "GET":
+        ftype = {
+            "Survey WCC":"Survey PO",
+            "Signage WCC":"Signage PO",
+            "Revisit GR Approval":"Revisit PO",
+            "Colo WCC":"Colo PO",
+        }
+
+        arra = [
+            {
+                '$match': {
+                    'poStatus': 'Open', 
+                    'scope': ftype[mName],
+                    "poNumber":poNumber,
+                    'market':market,
+                }
+            }, {
+                '$project': {
+                    'itemCode': 1, 
+                    '_id': 0
+                }
+            }
+        ]
+        response = cmo.finding_aggregate("PoInvoice",arra)
+        return respond(response)
     

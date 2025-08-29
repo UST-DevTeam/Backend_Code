@@ -351,708 +351,6 @@ def masterunitRate():
     return df
 
 
-@poLifeCycle_blueprint.route('/finance/poInvoiceBased', methods=["GET","POST","PUT","PATCH","DELETE"])
-@poLifeCycle_blueprint.route('/finance/poInvoiceBased/<id>', methods=["GET","POST","PUT","PATCH","DELETE"])
-@token_required
-def poInvoiceBased(current_user,id=None):
-    if request.method=="GET":
-        poStatus = "Open"
-        if (request.args.get("poStatus")!=None and request.args.get("poStatus")!='undefined'):
-            poStatus= request.args.get("poStatus")
-        arra = []
-        if  id not in ['','undefined',None]:
-            arra=arra+[
-                {
-                '$match': {
-                    'deleteStatus': {'$ne': 1}, 
-                    
-                    'customer':id
-                }
-            },
-            ]       
-        arra = arra+[
-            {
-                '$match': {
-                    'deleteStatus': {'$ne': 1}, 
-                    "poStatus":poStatus,
-                    'projectGroup': {'$in': projectGroup_str(current_user['userUniqueId'])},
-                    
-                }
-            }, {
-                '$sort':{
-                    '_id':-1
-                }
-            }
-        ]
-        if (request.args.get("itemCodeStatus")!=None and request.args.get("itemCodeStatus")!='undefined'):
-            arra = arra + [
-                {
-                    '$match':{
-                        'itemCodeStatus': request.args.get("itemCodeStatus")
-                    }
-                }
-            ]
-        if request.args.get("searvhView")!=None and request.args.get("searvhView")!='undefined':
-            searvhView = request.args.get("searvhView").strip()
-            arra = arra + [
-                {
-                    '$match': {
-                        '$or': [
-                            {
-                                'itemCode': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }, {
-                                'poNumber': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }, {
-                                'gbpa': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }, {
-                                'description': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }, {
-                                'itemCodeStatus': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }, {
-                                'poStatus': {
-                                    '$regex': searvhView, 
-                                    '$options': 'i'
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        arra = arra + apireq.countarra("PoInvoice",arra) + apireq.args_pagination(request.args)
-        arra = arra + [
-            {
-                '$lookup': {
-                    'from': 'invoice', 
-                    'let': {
-                        'projectGroup': '$projectGroup', 
-                        'poNumber': '$poNumber', 
-                        'itemCode': '$itemCode'
-                    }, 
-                    'pipeline': [
-                        {
-                            '$match': {
-                                'deleteStatus': {
-                                    '$ne': 1
-                                }
-                            }
-                        }, {
-                            '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {
-                                            '$eq': [
-                                                '$projectGroup', '$$projectGroup'
-                                            ]
-                                        }, {
-                                            '$eq': [
-                                                '$poNumber', '$$poNumber'
-                                            ]
-                                        }, {
-                                            '$eq': [
-                                                '$itemCode', '$$itemCode'
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }, {
-                            '$addFields': {
-                                'qty': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$qty', ''
-                                            ]
-                                        }, 
-                                        'then': 0, 
-                                        'else': '$qty'
-                                    }
-                                }
-                            }
-                        }, {
-                            '$group': {
-                                '_id': None, 
-                                'qty': {
-                                    '$sum': '$qty'
-                                }
-                            }
-                        }
-                    ], 
-                    'as': 'result'
-                }
-            }, {
-                '$unwind': {
-                    'path': '$result', 
-                    'preserveNullAndEmptyArrays': True
-                }
-            }, {
-                '$addFields': {
-                    'invoicedQty': '$result.qty'
-                }
-            }, {
-                '$addFields': {
-                    'customer': {
-                        '$toObjectId': '$customer'
-                    },
-                    'projectGroup': {
-                        '$toObjectId': '$projectGroup'
-                    },  
-                    '_id': {
-                        '$toString': '$_id'
-                    }, 
-                    'uniqueId': {
-                        '$toString': '$_id'
-                    }, 
-                    'invoicedQty': '$result.qty'
-                }
-            }, {
-                '$lookup': {
-                    'from': 'customer', 
-                    'localField': 'customer', 
-                    'foreignField': '_id', 
-                    'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
-                    'as': 'customerResult'
-                }
-            }, {
-                '$lookup': {
-                    'from': 'projectGroup', 
-                    'localField': 'projectGroup', 
-                    'foreignField': '_id', 
-                    'pipeline': [
-                        {
-                            "$match":{
-                                'deleteStatus':{'$ne':1}
-                            }
-                        }, {
-                            '$lookup': {
-                                'from': 'customer', 
-                                'localField': 'customerId', 
-                                'foreignField': '_id', 
-                                'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
-                                'as': 'customer'
-                            }
-                        }, {
-                            '$unwind': {
-                                'path': '$customer', 
-                                'preserveNullAndEmptyArrays': True
-                            }
-                        }, {
-                            '$lookup': {
-                                'from': 'zone', 
-                                'localField': 'zoneId', 
-                                'foreignField': '_id', 
-                                'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
-                                'as': 'zone'
-                            }
-                        }, {
-                            '$unwind': {
-                                'path': '$zone', 
-                                'preserveNullAndEmptyArrays': True
-                            }
-                        }, {
-                            '$lookup': {
-                                'from': 'costCenter', 
-                                'localField': 'costCenterId', 
-                                'foreignField': '_id', 
-                                'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
-                                'as': 'costCenter'
-                            }
-                        }, {
-                            '$unwind': {
-                                'path': '$costCenter', 
-                                'preserveNullAndEmptyArrays': True
-                            }
-                        }, {
-                            '$addFields': {
-                                'costCenter': '$costCenter.costCenter', 
-                                'zone': '$zone.shortCode', 
-                                'customer': '$customer.shortName'
-                            }
-                        }, {
-                            '$addFields': {
-                                'projectGroupId': {
-                                    '$concat': [
-                                        '$customer', '-', '$zone', '-', '$costCenter'
-                                    ]
-                                }
-                            }
-                        }, {
-                            '$project': {
-                                'projectGroupId': 1, 
-                                '_id': 0
-                            }
-                        }
-                    ], 
-                    'as': 'projectGroupIdResult'
-                }
-            }, {
-                '$unwind': {
-                    'path': '$customerResult', 
-                    'preserveNullAndEmptyArrays': True
-                }
-            }, {
-                '$unwind': {
-                    'path': '$projectGroupIdResult', 
-                    'preserveNullAndEmptyArrays': True
-                }
-            }, {
-                '$addFields': {
-                    'customerName': '$customerResult.customerName',  
-                    'projectGroupId': '$projectGroupIdResult.projectGroupId', 
-                    'invoicedQty': {
-                        '$ifNull': [
-                            '$invoicedQty', 0
-                        ]
-                    }
-                }
-            }, {
-                '$addFields': {
-                    'projectGroup': {
-                        '$toString': '$projectGroup'
-                    }, 
-                    'customer': {
-                        '$toString': '$customer'
-                    }, 
-                    'poStartDate': {
-                        '$cond': [
-                            {
-                                '$eq': [
-                                    '$poStartDate', ''
-                                ]
-                            }, '', {
-                                '$dateToString': {
-                                    'date': {
-                                        '$toDate': '$poStartDate'
-                                    }, 
-                                    'format': '%d-%m-%Y', 
-                                    'timezone': 'Asia/Kolkata'
-                                }
-                            }
-                        ]
-                    }, 
-                    'poEndDate': {
-                        '$cond': [
-                            {
-                                '$eq': [
-                                    '$poEndDate', ''
-                                ]
-                            }, '', {
-                                '$dateToString': {
-                                    'date': {
-                                        '$toDate': '$poEndDate'
-                                    }, 
-                                    'format': '%d-%m-%Y', 
-                                    'timezone': 'Asia/Kolkata'
-                                }
-                            }
-                        ]
-                    }
-                }
-            }, {
-                '$addFields': {
-                    'povalidity': {
-                        '$cond': [
-                            {
-                                '$eq': [
-                                    '$poEndDate', ''
-                                ]
-                            }, '', {
-                                '$divide': [
-                                    {
-                                        '$subtract': [
-                                            {
-                                                '$toDate': '$poEndDate'
-                                            }, {
-                                                '$toDate': current_date()
-                                            }
-                                        ]
-                                    }, 86400000
-                                ]
-                            }
-                        ]
-                    }
-                }
-            }, {
-                '$addFields': {
-                    'openQty': {
-                        '$subtract': [
-                            '$initialPoQty', '$invoicedQty'
-                        ]
-                    }
-                }
-            }, {
-                '$addFields': {
-                    'OpenPoValue': {
-                        '$multiply': [
-                            '$unitRate(INR)', '$openQty'
-                        ]
-                    }
-                }
-            }, {
-                '$project': {
-                    'customerResult': 0,
-                    'projectGroupIdResult': 0, 
-                    'result': 0
-                }
-            }
-        ]
-        response = cmo.finding_aggregate("PoInvoice",arra)
-        return respond(response)
-
-    elif request.method == "POST":
-        
-        if id==None:
-            allData = request.get_json()
-            if allData['poStatus']  in ['Closed',"Short Closed"]:
-                return respond ({
-                    'status':400,
-                    "icon":"error",
-                    "msg":"Please change the PO status. The PO status cannot be closed or short-closed."
-                })
-                
-
-            arra = [
-                {
-                    '$match':{
-                            'projectGroup':allData['projectGroup'],
-                            'itemCode':allData['itemCode'],
-                            'poNumber':allData['poNumber'],
-                    }
-                }
-            ]
-            reponse = cmo.finding_aggregate("PoInvoice",arra)
-            if (len(reponse['data'])):
-                return {
-                    'status':400,
-                    "msg":"This PO , Item Code And Project Group Combination Is Already Exist In DataBase.",
-                    "icon":"error",
-                },400
-            
-            allData['unitRate(INR)'] = int(allData['unitRate(INR)'])
-            allData['initialPoQty'] = int(allData['initialPoQty'])
-            allData['addedAt'] = unique_timestamp()
-            allData['itemCodeStatus'] = "Open"
-            updateBy = {
-                'poNumber':allData['poNumber']
-            }
-            updateData = {
-                'poStatus':"Open"
-            }
-            cmo.updating_m("PoInvoice",updateBy,updateData,False)
-            response=cmo.insertion("PoInvoice",allData)
-            return respond(response)
-        
-        elif id!=None:
-            allData=request.get_json()
-
-            if "projectGroupId" in allData:
-                del allData['projectGroupId']
-            if "customerName" in allData:
-                del allData['customerName']
-                
-            allData['unitRate(INR)'] = int(allData['unitRate(INR)'])
-            allData['initialPoQty'] = int(allData['initialPoQty'])
-
-
-            arra = [
-                {
-                    '$match':{
-                        '_id':ObjectId(id)
-                    }
-                }
-            ]
-            response = cmo.finding_aggregate("PoInvoice",arra)
-            PoStatus = response['data'][0]['poStatus']
-            projectGroup1 = response['data'][0]['projectGroup']
-            
-            if allData['poStatus'] in ['Closed','Short Closed'] and PoStatus in ['Closed','Short Closed']:
-                return respond({
-                    'status':400,
-                    "msg":"This PO Number is already closed. First, open it and then edit it.",
-                    "icon":"error"
-                })
-
-            if allData['poStatus'] == "Open" and PoStatus in ['Closed','Short Closed']:
-                # match_Stage = {
-                #     '_id':ObjectId(id)
-                # }
-                # response = cagg.poEdit(match_Stage)
-                # initialPoQty = allData['initialPoQty']
-                # invoicedQty = response['data'][0]['invoicedQty']
-                # openQty = initialPoQty - invoicedQty
-                # if openQty == 0:
-                #     return respond({
-                #         'status':400,
-                #         "msg":"Please increase the Initial PO Qty",
-                #         "icon":"error"
-                #     })
-                # if  openQty < 0:
-                #     return respond({
-                #         'status':400,
-                #         "msg":"The Initial PO Quantity is not less than the Invoiced Quantity, so please increase the Initial PO Qty accordingly.",
-                #         "icon":"error"
-                #     })
-                    
-                match_Stage = {
-                    'poNumber':allData['poNumber']
-                }
-                response = cagg.poEdit(match_Stage)
-                Data = response['data']
-
-                for i in Data:
-                    PONumber = []
-                    if i['openQty']!=0:
-                        PONumber.append(i['poNumber'])
-
-                        updateData = {
-                            'itemCodeStatus':"Open",
-                        }
-                        updateBy = {
-                            '_id':i['_id']
-                        }
-                        cmo.updating("PoInvoice",updateBy,updateData,False)
-                        
-                    if i['openQty'] == 0:
-                        PONumber.append(i['poNumber'])
-                        
-                        
-                    for i in PONumber:
-                        updateData = {
-                            "poStatus":"Open"
-                        }
-                        updateBy = {
-                            'poNumber': i
-                        }
-                        cmo.updating_m("PoInvoice",updateBy,updateData,False)
-                        
-                updateBy = {
-                    "_id":ObjectId(id)
-                }
-                        
-                updateData = {
-                    'itemCodeStatus':"Open"
-                }
-                response = cmo.updating("PoInvoice",updateBy,updateData,False)
-                return respond(response)
-
-            if allData['poStatus'] in ['Closed','Short Closed']:
-                data = {
-                    'itemCodeStatus':"Closed"
-                }
-                data['poStatus'] = allData['poStatus']
-
-                updateBy = {
-                    'poNumber':allData['poNumber']
-                }
-                response = cmo.updating_m("PoInvoice",updateBy,data,False)
-                return respond(response)
-            
-            else:
-                match_stage = {
-                            'poNumber': allData['poNumber'],
-                            'itemCode':allData['itemCode'],
-                            'projectGroup':projectGroup1
-                        }
-                    
-                response = cagg.poEdit(match_stage)
-                initialPoQty = allData['initialPoQty']
-                invoicedQty = response['data'][0]['invoicedQty']
-                openQty = initialPoQty - invoicedQty
-                if  openQty < 0:
-                    return respond({
-                        'status':400,
-                        "msg":"The Initial PO Quantity is not less than the Invoiced Quantity, so please increase the Initial PO Qty accordingly.",
-                        "icon":"error"
-                    })
-                if (openQty) > 0:
-                    allData['itemCodeStatus'] = "Open"
-                    updateby = {
-                        'poNumber':allData['poNumber']
-                    }
-                    updateData = {
-                        'poStatus':'Open'
-                    }
-                    cmo.updating_m("PoInvoice",updateby,updateData,False)
-                updateBy={
-                    "_id":ObjectId(id)
-                }
-                cmo.updating("PoInvoice",updateBy,allData,False)
-                    
-                if (openQty) == 0:
-                    allData['itemCodeStatus'] = "Closed"
-                    match_stage = {
-                        'poNumber':allData['poNumber']
-                    }
-                    match_stage2 = {
-                        'openQty':{
-                            '$ne':0
-                        }
-                    }
-                    response = cagg.poEdit(match_stage,match_stage2)
-                    response = response['data']
-                    if (len(response) == 0):
-                        allData['poStatus'] = "Closed"
-                        updateby = {
-                            'poNumber':allData['poNumber']
-                        }
-                        updateData = {
-                            'poStatus':'Closed'
-                        }
-                        cmo.updating_m("PoInvoice",updateby,updateData,False)
-                updateBy={
-                    "_id":ObjectId(id)
-                }
-                response=cmo.updating("PoInvoice",updateBy,allData,False)
-                return respond(response)
-        
-    elif request.method=="DELETE":
-        allData = request.json.get("ids")
-        if (len(allData)>0):
-            itemCodeArray = []
-            for i in allData:
-                arra = [
-                    {
-                        '$match': {
-                            '_id':ObjectId(i)
-                        }
-                    }, {
-                        '$addFields': {
-                            'initialPoQty': {
-                                '$cond': {
-                                    'if': {
-                                        '$eq': [
-                                            '$initialPoQty', ''
-                                        ]
-                                    }, 
-                                    'then': 0, 
-                                    'else': '$initialPoQty'
-                                }
-                            }
-                        }
-                    }, {
-                        '$lookup': {
-                            'from': 'invoice', 
-                            'let': {
-                                'projectGroup': '$projectGroup', 
-                                'poNumber': '$poNumber', 
-                                'itemCode': '$itemCode'
-                            }, 
-                            'pipeline': [
-                                {
-                                    '$match': {
-                                        'deleteStatus': {
-                                            '$ne': 1
-                                        }
-                                    }
-                                }, {
-                                    '$match': {
-                                        '$expr': {
-                                            '$and': [
-                                                {
-                                                    '$eq': [
-                                                        '$projectGroup', '$$projectGroup'
-                                                    ]
-                                                }, {
-                                                    '$eq': [
-                                                        '$poNumber', '$$poNumber'
-                                                    ]
-                                                }, {
-                                                    '$eq': [
-                                                        '$itemCode', '$$itemCode'
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }, {
-                                    '$addFields': {
-                                        'qty': {
-                                            '$cond': {
-                                                'if': {
-                                                    '$eq': [
-                                                        '$qty', ''
-                                                    ]
-                                                }, 
-                                                'then': 0, 
-                                                'else': '$qty'
-                                            }
-                                        }
-                                    }
-                                }, {
-                                    '$group': {
-                                        '_id': None, 
-                                        'qty': {
-                                            '$sum': '$qty'
-                                        }
-                                    }
-                                }
-                            ], 
-                            'as': 'result'
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$result', 
-                            'preserveNullAndEmptyArrays': True
-                        }
-                    }, {
-                        '$addFields': {
-                            'invoicedQty':{
-                                '$ifNull':['$result.qty',0]
-                            }
-                        }
-                    }
-                ]
-                response = cmo.finding_aggregate("PoInvoice",arra)
-                invoicedQty = response['data'][0]['invoicedQty']
-                itemCode = response['data'][0]['itemCode']
-                if invoicedQty == 0:
-                    cmo.deleting("PoInvoice",i,current_user['userUniqueId'])
-                else:
-                    itemCodeArray.append(itemCode)
-            if (len(itemCodeArray)>0):
-                if (len(itemCodeArray) == 1):
-                    datams={
-                        "status":400,
-                        "icon":"error",
-                        "msg":f"This Line Item Code ({', '.join(itemCodeArray)}) contains Invoiced Quantity",
-                        "data":[]
-                    }
-                    return respond(datams)
-                else:
-                    datams={
-                        "status":400,
-                        "icon":"error",
-                        "msg":f"These Line Item Code ({', '.join(itemCodeArray)}) contains Invoiced Quantity",
-                        "data":[]
-                    }
-                    return respond(datams)
-            else:
-                datams={
-                    "status":200,
-                    "icon":"info",
-                    "msg":f"Data deleted successfully",
-                    "data":[]
-                }
-                return respond(datams)    
-        else:
-            return jsonify({'msg':"Id not found"})
-        
-
 
 
 
@@ -3369,348 +2667,684 @@ def finance_invoice_wcc(current_user):
     response = cmo.finding_aggregate("invoice",arra)
     return respond(response)
 
+##=================================================================##
+##=======================Internal-Project==========================##
+##=================================================================##
+
+
+@poLifeCycle_blueprint.route('/finance/poInvoiceBased', methods=["GET","POST","PUT","PATCH","DELETE"])
+@poLifeCycle_blueprint.route('/finance/poInvoiceBased/<id>', methods=["GET","POST","PUT","PATCH","DELETE"])
+@token_required
+def poInvoiceBased(current_user,id=None):
+    if request.method=="GET":
+        # poStatus = "Open"
+        # if (request.args.get("poStatus")!=None and request.args.get("poStatus")!='undefined'):
+        #     poStatus= request.args.get("poStatus")
+        # arra = []
+        # if  id not in ['','undefined',None]:
+        #     arra=arra+[
+        #         {
+        #         '$match': {
+        #             'deleteStatus': {'$ne': 1}, 
+                    
+        #             'customer':id
+        #         }
+        #     },
+        #     ]       
+        # arra = arra+[
+        #     {
+        #         '$match': {
+        #             'deleteStatus': {'$ne': 1}, 
+        #             "poStatus":poStatus,
+        #             'projectGroup': {'$in': projectGroup_str(current_user['userUniqueId'])},
+                    
+        #         }
+        #     }, {
+        #         '$sort':{
+        #             '_id':-1
+        #         }
+        #     }
+        # ]
+        # if (request.args.get("itemCodeStatus")!=None and request.args.get("itemCodeStatus")!='undefined'):
+        #     arra = arra + [
+        #         {
+        #             '$match':{
+        #                 'itemCodeStatus': request.args.get("itemCodeStatus")
+        #             }
+        #         }
+        #     ]
+        # if request.args.get("searvhView")!=None and request.args.get("searvhView")!='undefined':
+        #     searvhView = request.args.get("searvhView").strip()
+        #     arra = arra + [
+        #         {
+        #             '$match': {
+        #                 '$or': [
+        #                     {
+        #                         'itemCode': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }, {
+        #                         'poNumber': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }, {
+        #                         'gbpa': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }, {
+        #                         'description': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }, {
+        #                         'itemCodeStatus': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }, {
+        #                         'poStatus': {
+        #                             '$regex': searvhView, 
+        #                             '$options': 'i'
+        #                         }
+        #                     }
+        #                 ]
+        #             }
+        #         }
+        #     ]
+        # arra = arra + apireq.countarra("PoInvoice",arra) + apireq.args_pagination(request.args)
+        # arra = arra + [
+        #     {
+        #         '$lookup': {
+        #             'from': 'invoice', 
+        #             'let': {
+        #                 'projectGroup': '$projectGroup', 
+        #                 'poNumber': '$poNumber', 
+        #                 'itemCode': '$itemCode'
+        #             }, 
+        #             'pipeline': [
+        #                 {
+        #                     '$match': {
+        #                         'deleteStatus': {
+        #                             '$ne': 1
+        #                         }
+        #                     }
+        #                 }, {
+        #                     '$match': {
+        #                         '$expr': {
+        #                             '$and': [
+        #                                 {
+        #                                     '$eq': [
+        #                                         '$projectGroup', '$$projectGroup'
+        #                                     ]
+        #                                 }, {
+        #                                     '$eq': [
+        #                                         '$poNumber', '$$poNumber'
+        #                                     ]
+        #                                 }, {
+        #                                     '$eq': [
+        #                                         '$itemCode', '$$itemCode'
+        #                                     ]
+        #                                 }
+        #                             ]
+        #                         }
+        #                     }
+        #                 }, {
+        #                     '$addFields': {
+        #                         'qty': {
+        #                             '$cond': {
+        #                                 'if': {
+        #                                     '$eq': [
+        #                                         '$qty', ''
+        #                                     ]
+        #                                 }, 
+        #                                 'then': 0, 
+        #                                 'else': '$qty'
+        #                             }
+        #                         }
+        #                     }
+        #                 }, {
+        #                     '$group': {
+        #                         '_id': None, 
+        #                         'qty': {
+        #                             '$sum': '$qty'
+        #                         }
+        #                     }
+        #                 }
+        #             ], 
+        #             'as': 'result'
+        #         }
+        #     }, {
+        #         '$unwind': {
+        #             'path': '$result', 
+        #             'preserveNullAndEmptyArrays': True
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'invoicedQty': '$result.qty'
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'customer': {
+        #                 '$toObjectId': '$customer'
+        #             },
+        #             'projectGroup': {
+        #                 '$toObjectId': '$projectGroup'
+        #             },  
+        #             '_id': {
+        #                 '$toString': '$_id'
+        #             }, 
+        #             'uniqueId': {
+        #                 '$toString': '$_id'
+        #             }, 
+        #             'invoicedQty': '$result.qty'
+        #         }
+        #     }, {
+        #         '$lookup': {
+        #             'from': 'customer', 
+        #             'localField': 'customer', 
+        #             'foreignField': '_id', 
+        #             'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+        #             'as': 'customerResult'
+        #         }
+        #     }, {
+        #         '$lookup': {
+        #             'from': 'projectGroup', 
+        #             'localField': 'projectGroup', 
+        #             'foreignField': '_id', 
+        #             'pipeline': [
+        #                 {
+        #                     "$match":{
+        #                         'deleteStatus':{'$ne':1}
+        #                     }
+        #                 }, {
+        #                     '$lookup': {
+        #                         'from': 'customer', 
+        #                         'localField': 'customerId', 
+        #                         'foreignField': '_id', 
+        #                         'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+        #                         'as': 'customer'
+        #                     }
+        #                 }, {
+        #                     '$unwind': {
+        #                         'path': '$customer', 
+        #                         'preserveNullAndEmptyArrays': True
+        #                     }
+        #                 }, {
+        #                     '$lookup': {
+        #                         'from': 'zone', 
+        #                         'localField': 'zoneId', 
+        #                         'foreignField': '_id', 
+        #                         'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+        #                         'as': 'zone'
+        #                     }
+        #                 }, {
+        #                     '$unwind': {
+        #                         'path': '$zone', 
+        #                         'preserveNullAndEmptyArrays': True
+        #                     }
+        #                 }, {
+        #                     '$lookup': {
+        #                         'from': 'costCenter', 
+        #                         'localField': 'costCenterId', 
+        #                         'foreignField': '_id', 
+        #                         'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+        #                         'as': 'costCenter'
+        #                     }
+        #                 }, {
+        #                     '$unwind': {
+        #                         'path': '$costCenter', 
+        #                         'preserveNullAndEmptyArrays': True
+        #                     }
+        #                 }, {
+        #                     '$addFields': {
+        #                         'costCenter': '$costCenter.costCenter', 
+        #                         'zone': '$zone.shortCode', 
+        #                         'customer': '$customer.shortName'
+        #                     }
+        #                 }, {
+        #                     '$addFields': {
+        #                         'projectGroupId': {
+        #                             '$concat': [
+        #                                 '$customer', '-', '$zone', '-', '$costCenter'
+        #                             ]
+        #                         }
+        #                     }
+        #                 }, {
+        #                     '$project': {
+        #                         'projectGroupId': 1, 
+        #                         '_id': 0
+        #                     }
+        #                 }
+        #             ], 
+        #             'as': 'projectGroupIdResult'
+        #         }
+        #     }, {
+        #         '$unwind': {
+        #             'path': '$customerResult', 
+        #             'preserveNullAndEmptyArrays': True
+        #         }
+        #     }, {
+        #         '$unwind': {
+        #             'path': '$projectGroupIdResult', 
+        #             'preserveNullAndEmptyArrays': True
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'customerName': '$customerResult.customerName',  
+        #             'projectGroupId': '$projectGroupIdResult.projectGroupId', 
+        #             'invoicedQty': {
+        #                 '$ifNull': [
+        #                     '$invoicedQty', 0
+        #                 ]
+        #             }
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'projectGroup': {
+        #                 '$toString': '$projectGroup'
+        #             }, 
+        #             'customer': {
+        #                 '$toString': '$customer'
+        #             }, 
+        #             'poStartDate': {
+        #                 '$cond': [
+        #                     {
+        #                         '$eq': [
+        #                             '$poStartDate', ''
+        #                         ]
+        #                     }, '', {
+        #                         '$dateToString': {
+        #                             'date': {
+        #                                 '$toDate': '$poStartDate'
+        #                             }, 
+        #                             'format': '%d-%m-%Y', 
+        #                             'timezone': 'Asia/Kolkata'
+        #                         }
+        #                     }
+        #                 ]
+        #             }, 
+        #             'poEndDate': {
+        #                 '$cond': [
+        #                     {
+        #                         '$eq': [
+        #                             '$poEndDate', ''
+        #                         ]
+        #                     }, '', {
+        #                         '$dateToString': {
+        #                             'date': {
+        #                                 '$toDate': '$poEndDate'
+        #                             }, 
+        #                             'format': '%d-%m-%Y', 
+        #                             'timezone': 'Asia/Kolkata'
+        #                         }
+        #                     }
+        #                 ]
+        #             }
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'povalidity': {
+        #                 '$cond': [
+        #                     {
+        #                         '$eq': [
+        #                             '$poEndDate', ''
+        #                         ]
+        #                     }, '', {
+        #                         '$divide': [
+        #                             {
+        #                                 '$subtract': [
+        #                                     {
+        #                                         '$toDate': '$poEndDate'
+        #                                     }, {
+        #                                         '$toDate': current_date()
+        #                                     }
+        #                                 ]
+        #                             }, 86400000
+        #                         ]
+        #                     }
+        #                 ]
+        #             }
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'openQty': {
+        #                 '$subtract': [
+        #                     '$initialPoQty', '$invoicedQty'
+        #                 ]
+        #             }
+        #         }
+        #     }, {
+        #         '$addFields': {
+        #             'OpenPoValue': {
+        #                 '$multiply': [
+        #                     '$unitRate(INR)', '$openQty'
+        #                 ]
+        #             }
+        #         }
+        #     }, {
+        #         '$project': {
+        #             'customerResult': 0,
+        #             'projectGroupIdResult': 0, 
+        #             'result': 0
+        #         }
+        #     }
+        # ]
+        arra = [
+            {
+                '$addFields': {
+                    'customer': {
+                        '$toObjectId': '$customer'
+                    }, 
+                    'projectSubType': {
+                        '$toObjectId': '$projectSubType'
+                    }, 
+                    'projectId': {
+                        '$toObjectId': '$projectId'
+                    }
+                }
+            }, {
+                '$lookup': {
+                    'from': 'customer', 
+                    'localField': 'customer', 
+                    'foreignField': '_id', 
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'deleteStatus': {
+                                    '$ne': 1
+                                }
+                            }
+                        }
+                    ], 
+                    'as': 'customerResult'
+                }
+            }, {
+                '$lookup': {
+                    'from': 'projectType', 
+                    'localField': 'projectSubType', 
+                    'foreignField': '_id', 
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'deleteStatus': {
+                                    '$ne': 1
+                                }
+                            }
+                        }
+                    ], 
+                    'as': 'projectSubTypeResult'
+                }
+            }, {
+                '$lookup': {
+                    'from': 'project', 
+                    'localField': 'projectId', 
+                    'foreignField': '_id', 
+                    'pipeline': [
+                        {
+                            '$match': {
+                                'deleteStatus': {
+                                    '$ne': 1
+                                }
+                            }
+                        }
+                    ], 
+                    'as': 'projectResult'
+                }
+            }, {
+                '$addFields': {
+                    'customerName': {
+                        '$arrayElemAt': [
+                            '$customerResult.customerName', 0
+                        ]
+                    }, 
+                    'projectType': {
+                        '$arrayElemAt': [
+                            '$projectSubTypeResult.projectType', 0
+                        ]
+                    }, 
+                    'projectSubTypeName': {
+                        '$arrayElemAt': [
+                            '$projectSubTypeResult.subProject', 0
+                        ]
+                    }, 
+                    'projectIdName': {
+                        '$arrayElemAt': [
+                            '$projectResult.projectId', 0
+                        ]
+                    }
+                }
+            }, {
+                '$project': {
+                    'customerName': 1, 
+                    'projectType': 1, 
+                    'projectSubTypeName': 1, 
+                    'ustProjectId': 1, 
+                    'projectIdName': 1, 
+                    'market': 1, 
+                    'scope': 1, 
+                    'poNumber': 1, 
+                    'itemCode': 1, 
+                    'description': 1, 
+                    'poReceivedDate': 1, 
+                    'poValidityDate': 1, 
+                    'unitPrice': 1, 
+                    'qty': 1, 
+                    'poValue': {
+                        '$multiply': [
+                            '$unitPrice', '$qty'
+                        ]
+                    }, 
+                    'usedQty': 1, 
+                    'opnQty': 1, 
+                    "poStatus":1,
+                    'uniqueId': {
+                        '$toString': '$_id'
+                    }, 
+                    '_id': 0
+                }
+            }
+        ]
+        arra = arra + apireq.countarra("PoInvoice",arra) + apireq.args_pagination(request.args)
+        response = cmo.finding_aggregate("PoInvoice",arra)
+        return respond(response)
+
+    elif request.method == "POST":
+
+        allData = request.get_json()
+        allData = {k: v.strip() if isinstance(v, str) else v for k, v in allData.items()}
+
+        if id==None:
+
+            required_fields = {'customer',"projectType","projectSubType","ustProjectId","projectId","market","scope","poNumber","itemCode","description","poReceivedDate","poValidityDate","unitPrice","qty","poStatus"}
+            if not all(field in allData for field in required_fields):
+                return respond({
+                    "status": 400,
+                    "icon": "error",
+                    "msg": "Please provide all required fields"
+                })
+            
+            if not isinstance(allData.get("qty"), int):
+                return respond({
+                    'status':400,
+                    "icon":"error",
+                    "msg":"Quantity must be an integer"
+                })
+            
+            if not isinstance(allData.get("unitPrice"),(int, float)):
+                return respond({
+                    'status':400,
+                    "icon":"error",
+                    "msg":"Unit Price must be an integer or float"
+                })
+            
+            if allData['poStatus']  in ['Closed',"Short Closed"]:
+                return respond ({
+                    'status':400,
+                    "icon":"error",
+                    "msg":"Please change the PO status. The PO status cannot be closed or short-closed."
+                })
+                
+
+            arra = [
+                {
+                    '$match':{
+                            'market':allData['market'],
+                            'scope':allData['scope'],
+                            'poNumber':allData['poNumber'],
+                            'itemCode':allData['itemCode']
+                    }
+                }
+            ]
+            reponse = cmo.finding_aggregate("PoInvoice",arra)
+            if (len(reponse['data'])):
+                return {
+                    'status':400,
+                    "msg":f"This Market-{allData['market']}, Scope-{allData['scope']} , PO#-{allData['poNumber']} and Line no#-{allData['itemCode']} Combination Is Already Exist In DataBase.",
+                    "icon":"error",
+                },400
+            
+            allData['usedQty'] = 0
+            allData['opnQty'] = allData['qty']
+            # allData['addedAt'] = unique_timestamp()
+            # updateBy = {
+            #     'poNumber':allData['poNumber']
+            # }
+            # updateData = {
+            #     'poStatus':"Open"
+            # }
+            # cmo.updating_m("PoInvoice",updateBy,updateData,False)
+            response=cmo.insertion("PoInvoice",allData)
+            return respond(response)
+        
+        elif id!=None:
+
+            required_fields = {"ustProjectId","description","poReceivedDate","poValidityDate","qty","poStatus"}
+            if not all(field in allData for field in required_fields):
+                return respond({
+                    "status": 400,
+                    "icon": "error",
+                    "msg": "Please provide all required fields"
+                })
+            
+            if not isinstance(allData.get("qty"), int):
+                return respond({
+                    'status':400,
+                    "icon":"error",
+                    "msg":"Quantity must be an integer"
+                })
+            allData['qty'] = int(allData['qty'])
+            updateBy = {
+                '_id':ObjectId(id)
+            }
+
+
+            arra = [
+                {
+                    '$match':{
+                        '_id':ObjectId(id)
+                    }
+                }
+            ]
+            response = cmo.finding_aggregate("PoInvoice",arra)
+            PoStatus = response['data'][0]['poStatus']
+            usedQty = response['data'][0]['usedQty']
+            
+            if allData['poStatus'] in ['Closed','Short Closed'] and PoStatus in ['Closed','Short Closed']:
+                return respond({
+                    'status':400,
+                    "msg":"This PO Number and Line number is already closed. First, open it and then edit it.",
+                    "icon":"error"
+                })
+
+            elif allData['poStatus'] == "Open" and PoStatus in ['Closed','Short Closed']:
+                updateData = {
+                    'ustProjectId':allData['ustProjectId'],
+                    'description':allData['description'],
+                    'poStatus':allData['poStatus'],
+
+                }
+                response = cmo.updating("PoInvoice",updateBy,updateData,False)
+                return respond(response)
+
+            elif allData['poStatus'] in ['Closed','Short Closed']:
+                updateData = {}
+                updateData['poStatus'] = allData['poStatus']
+                response = cmo.updating("PoInvoice",updateBy,updateData,False)
+                return respond(response)
+            
+            else:
+                if allData['qty'] < usedQty:
+                    return respond({
+                        'status':400,
+                        "icon":"error",
+                        "msg":"Quantity is not less than the Used Quantity, so please increase the PO Quantity accordingly."
+                    })
+                updateData = {
+                    'ustProjectId':allData['ustProjectId'],
+                    'description':allData['description'],
+                    'qty':allData['qty'],
+                    'opnQty':allData['qty'] - usedQty,
+                    'poStatus':allData['poStatus'],
+
+                }
+                if allData['qty'] == usedQty:
+                    updateData['poStatus'] = "Closed"
+                response = cmo.updating("PoInvoice",updateBy,updateData,False)
+                return respond(response)
+        
+    elif request.method=="DELETE":
+        allData = request.json.get("ids")
+        if (len(allData)>0):
+            itemCodeArray = []
+            for i in allData:
+                arra = [
+                    {
+                        '$match': {
+                            '_id':ObjectId(i)
+                        }
+                    }
+                ]
+                response = cmo.finding_aggregate("PoInvoice",arra)
+                usedQty = response['data'][0]['usedQty']
+                poNumber = response['data'][0]['poNumber']
+                itemCode = response['data'][0]['itemCode']
+                if usedQty == 0:
+                    cmo.deleting("PoInvoice",i,current_user['userUniqueId'])
+                else:
+                    pair = f"{poNumber}-{itemCode}"
+                    itemCodeArray.append(pair)
+            if (len(itemCodeArray)>0):
+                if (len(itemCodeArray) == 1):
+                    datams={
+                        "status":400,
+                        "icon":"error",
+                        "msg":f"This Po Number and Line Item Code ({', '.join(itemCodeArray)}) contains used Quantity",
+                        "data":[]
+                    }
+                    return respond(datams)
+                else:
+                    datams={
+                        "status":400,
+                        "icon":"error",
+                        "msg":f"These Po Number and Line Item Code ({', '.join(itemCodeArray)}) contains used Quantity",
+                        "data":[]
+                    }
+                    return respond(datams)
+            else:
+                datams={
+                    "status":200,
+                    "icon":"info",
+                    "msg":f"Data deleted successfully",
+                    "data":[]
+                }
+                return respond(datams)    
+        else:
+            return jsonify({'msg':"Id not found"})
+        
 
 
 
-
-
-
-# status = [
-# "SSID00234460",
-# "SSID00234463",
-# "SSID00234465",
-# "SSID00234466",
-# "SSID00234471",
-# "SSID00234472",
-# "SSID00234476",
-# "SSID00234478",
-# "SSID00235948",
-# "SSID00237571",
-# "SSID00237645",
-# "SSID00237647",
-# "SSID00239104",
-# "SSID00239105",
-# "SSID00239106",
-# "SSID00239107",
-# "SSID00239607",
-# "SSID00242031",
-# "SSID00242032",
-# "SSID00242035",
-# "SSID00242504",
-# "SSID00242506",
-# "SSID00242507",
-# "SSID00242508",
-# "SSID00242509",
-# "SSID00242510",
-# "SSID00242512",
-# "SSID00242513",
-# "SSID00242514",
-# "SSID00242515",
-# "SSID00242517",
-# "SSID00242518",
-# "SSID00242519",
-# "SSID00242520",
-# "SSID00242521",
-# "SSID00242522",
-# "SSID00242523",
-# "SSID00242524",
-# "SSID00242525",
-# "SSID00242526",
-# "SSID00242527",
-# "SSID00242528",
-# "SSID00242531",
-# "SSID00242532",
-# "SSID00242533",
-# "SSID00242534",
-# "SSID00242535",
-# "SSID00242536",
-# "SSID00242537",
-# "SSID00242538",
-# "SSID00242539",
-# "SSID00242540",
-# "SSID00242541",
-# "SSID00242542",
-# "SSID00242543",
-# "SSID00242545",
-# "SSID00242546",
-# "SSID00243708",
-# "SSID00247168",
-# "SSID00247169",
-# "SSID00247170",
-# "SSID00247171",
-# "SSID00247172",
-# "SSID00247173",
-# "SSID00247174",
-# "SSID00247175",
-# "SSID00247176",
-# "SSID00247178",
-# "SSID00247179",
-# "SSID00247180",
-# "SSID00247181",
-# "SSID00247182",
-# "SSID00251500",
-# "SSID00251501",
-# "SSID00252042",
-# "SSID00252048",
-# "SSID00252049",
-# "SSID00252050",
-# "SSID00252051",
-# "SSID00252052",
-# "SSID00252053",
-# "SSID00252054",
-# "SSID00252055",
-# "SSID00252056",
-# "SSID00252058",
-# "SSID00252059",
-# "SSID00252060",
-# "SSID00252062",
-# "SSID00252063",
-# "SSID00252114",
-# "SSID00252115",
-# "SSID00252118",
-# "SSID00252119",
-# "SSID00252120",
-# "SSID00252121",
-# "SSID00252122",
-# "SSID00252123",
-# "SSID00252125",
-# "SSID00252126",
-# "SSID00252127",
-# "SSID00252129",
-# "SSID00252133",
-# "SSID00252134",
-# "SSID00252135",
-# "SSID00252138",
-# "SSID00252139",
-# "SSID00252140",
-# "SSID00252141",
-# "SSID00252144",
-# "SSID00252146",
-# "SSID00252147",
-# "SSID00252148",
-# "SSID00252149",
-# "SSID00252151",
-# "SSID00252152",
-# "SSID00252153",
-# "SSID00252154",
-# "SSID00253961",
-# "SSID00253963",
-# "SSID00253964",
-# "SSID00253965",
-# "SSID00253967",
-# "SSID00253968",
-# "SSID00253969",
-# "SSID00253970",
-# "SSID00253971",
-# "SSID00253973",
-# "SSID00254182",
-# "SSID00254183",
-# "SSID00254184",
-# "SSID00254185",
-# "SSID00254186",
-# "SSID00254187",
-# "SSID00254188",
-# "SSID00254189",
-# "SSID00254190",
-# "SSID00254191",
-# "SSID00254192",
-# "SSID00254193",
-# "SSID00254194",
-# "SSID00254195",
-# "SSID00254196",
-# "SSID00254197",
-# "SSID00254198",
-# "SSID00254199",
-# "SSID00254201",
-# "SSID00254202",
-# "SSID00254205",
-# "SSID00254206",
-# "SSID00254207",
-# "SSID00254209",
-# "SSID00254210",
-# "SSID00254215",
-# "SSID00254223",
-# "SSID00254273",
-# "SSID00254274",
-# "SSID00254275",
-# "SSID00254277",
-# "SSID00255872",
-# "SSID00255873",
-# "SSID00255874",
-# "SSID00255875",
-# "SSID00255876",
-# "SSID00255877",
-# "SSID00255947",
-# "SSID00255948",
-# "SSID00255949",
-# "SSID00255950",
-# "SSID00259732",
-# "SSID00263174",
-# "SSID00263175",
-# "SSID00263176",
-# "SSID00263177",
-# "SSID00263178",
-# "SSID00263179",
-# "SSID00263180",
-# "SSID00263181",
-# "SSID00263182",
-# "SSID00263183",
-# "SSID00263184",
-# "SSID00263185",
-# "SSID00263186",
-# "SSID00263187",
-# "SSID00263232",
-# "SSID00263233",
-# "SSID00263234",
-# "SSID00263236",
-# "SSID00263237",
-# "SSID00263238",
-# "SSID00263239",
-# "SSID00263240",
-# "SSID00263241",
-# "SSID00263242",
-# "SSID00263243",
-# "SSID00263244",
-# "SSID00263245",
-# "SSID00263247",
-# "SSID00263268",
-# "SSID00264678",
-# "SSID00264679",
-# "SSID00264680",
-# "SSID00265235",
-# "SSID00265236",
-# "SSID00265237",
-# "SSID00265238",
-# "SSID00265239",
-# "SSID00265240",
-# "SSID00265241",
-# "SSID00265242",
-# "SSID00265243",
-# "SSID00265244",
-# "SSID00265245",
-# "SSID00265246",
-# "SSID00265247",
-# "SSID00265248",
-# "SSID00265249",
-# "SSID00265250",
-# "SSID00265251",
-# "SSID00265252",
-# "SSID00265253",
-# "SSID00265254",
-# "SSID00265255",
-# "SSID00265256",
-# "SSID00265257",
-# "SSID00265258",
-# "SSID00265260",
-# "SSID00265267",
-# "SSID00265268",
-# "SSID00266193",
-# "SSID00266195",
-# "SSID00266196",
-# "SSID00266197",
-# "SSID00266198",
-# "SSID00266204",
-# "SSID00266206",
-# "SSID00266207",
-# "SSID00266209",
-# "SSID00266211",
-# "SSID00266212",
-# "SSID00266213",
-# "SSID00266214",
-# "SSID00266216",
-# "SSID00266217",
-# "SSID00266218",
-# "SSID00266219",
-# "SSID00266222",
-# "SSID00266224",
-# "SSID00266225",
-# "SSID00266227",
-# "SSID00266229",
-# "SSID00266231",
-# "SSID00266232",
-# "SSID00266233",
-# "SSID00266234",
-# "SSID00266236",
-# "SSID00266237",
-# "SSID00266238",
-# "SSID00266239",
-# "SSID00266240",
-# "SSID00266242",
-# "SSID00266243",
-# "SSID00266244",
-# "SSID00266245",
-# "SSID00266247",
-# "SSID00266248",
-# "SSID00266249",
-# "SSID00266251",
-# "SSID00266252",
-# "SSID00266253",
-# "SSID00266254",
-# "SSID00266255",
-# "SSID00266256",
-# "SSID00266257",
-# "SSID00266258",
-# "SSID00266260",
-# "SSID00266261",
-# "SSID00266262",
-# "SSID00266263",
-# "SSID00266264",
-# "SSID00266265",
-# "SSID00266266",
-# "SSID00266267",
-# "SSID00266268",
-# "SSID00266269",
-# "SSID00266270",
-# "SSID00266271",
-# "SSID00266288",
-# "SSID00266289",
-# "SSID00266290",
-# "SSID00266291",
-# "SSID00266292",
-# "SSID00268489",
-# "SSID00271660",
-# "SSID00271667",
-# "SSID00271668",
-# "SSID00271669",
-# "SSID00271670",
-# "SSID00271671",
-# "SSID00271672",
-# "SSID00271849",
-# "SSID00271851",
-# "SSID00271859",
-# "SSID00271861",
-# "SSID00271863",
-# "SSID00271865",
-# "SSID00271868",
-# "SSID00271870",
-# "SSID00271872",
-# "SSID00271873",
-# "SSID00271874",
-# "SSID00271875",
-# "SSID00271876",
-# ]
-
-# print(len(status),"3693")
-
-# def my_arra():
-#     arra = [
-#         {
-#             '$match': {
-#                 'systemId': {
-#                     '$in': status
-#                 }
-#             }
-#         }, {
-#             '$project': {
-#                 '_id': {
-#                     '$toString': '$_id'
-#                 }
-#             }
-#         }
-#     ]
-#     response = cmo.finding_aggregate("SiteEngineer",arra)['data']
-#     print(len(response),"3709")
-
-#     for i in response:
-#         cmo.updating("invoice",{'siteId':i['_id']},{'status':'Partially Billed'},False)
-#     print("completed")  
+ 

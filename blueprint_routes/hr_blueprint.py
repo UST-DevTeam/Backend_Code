@@ -177,6 +177,7 @@ def manageemployee(current_user, id=None):
             for i in allData:
                 if allData[i] == "":
                     allData[i]=None
+
             arra = [
                 {
                     '$match': {
@@ -643,18 +644,22 @@ def manageprofile(current_user, id=None):
             return respond(response)
 
 
-@hr_blueprint.route("/hr/projectAllocation", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-@hr_blueprint.route("/hr/projectAllocation/<id>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+@hr_blueprint.route("/hr/projectAllocation", methods=["GET"])
+@hr_blueprint.route("/hr/projectAllocation/<id>", methods=["POST"])
 @token_required
 def projectallocation(current_user,id=None):
 
     if request.method == "GET":
-        arra = [
+        arra = [ 
             {
-                '$match':{
-                    'type':{'$ne':'Partner'},
-                    "status":"Active"
-                    }
+                '$addFields':{
+                    'empName':{
+                        '$toString':'$empName'
+                    },
+                    'empCode':{
+                        '$toString':'$empCode'
+                    },
+                }
             }, {
                 "$addFields": {
                     "emp": {"$concat": ["$empName", "(", "$empCode", ")"]},
@@ -688,7 +693,8 @@ def projectallocation(current_user,id=None):
                 '$project': {
                     'emp': 1, 
                     'userRole': 1, 
-                    'uniqueId': 1
+                    'uniqueId': 1,
+                    "Employment Type":1,
                 }
             }, {
                 '$lookup': {
@@ -936,16 +942,13 @@ def projectallocation(current_user,id=None):
                 "marketIds": market_value,
                 "empId": id,
             }
+            if request.json.get("Employment Type") == "Contract":
+                allData['type'] = "Partner"
             updateBy = {"empId": id}
             response = cmo.updating("projectAllocation", updateBy, allData, True)
             return respond(response)
                 
-    elif request.method == "DELETE":
-        if id != None:
-            response = cmo.deleting("projectAllocation", id)
-            return respond(response)
-        else:
-            return jsonify({"msg": "Please Provide Valid Unique Id"})
+
         
         
 @hr_blueprint.route("/hr/L1ApproverAllocation", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
