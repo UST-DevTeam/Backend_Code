@@ -1716,10 +1716,7 @@ def expensesFillExpense(current_user, id=None):
                 "checkInDate": checkInDate,
                 "checkOutDate": checkOutDate,
             }
-            if (
-                siteandTaskmatchingData["Amount"] is None
-                and siteandTaskmatchingData["Total_distance"] is None
-            ):
+            if (siteandTaskmatchingData["Amount"] is None and siteandTaskmatchingData["Total_distance"] is None):
                 return respond(
                     {
                         "status": 400,
@@ -2097,10 +2094,66 @@ def expensesFillExpense(current_user, id=None):
                             "msg": f"Please Try Again,System is in Another Process",
                         }
                     )
-            cmo.insertion("TestingExpenses",{'userId':datatoinsert['addedFor'],'ExpenseNo':ExpenseNo,'email':current_user["email"]})
             Response = cmo.insertion("Expenses", datatoinsert)
+            mailAggregation = [
+                {
+                    '$match': {
+                        '_id': ObjectId(current_user["userUniqueId"])
+                    }
+                }, {
+                    '$project': {
+                        'empName': 1, 
+                        'ustCode': {
+                            '$toString': '$ustCode'
+                        }, 
+                        'L1Approver': {
+                            '$toObjectId': '$L1Approver'
+                        }, 
+                        '_id': 0
+                    }
+                }, {
+                    '$lookup': {
+                        'from': 'userRegister', 
+                        'localField': 'L1Approver', 
+                        'foreignField': '_id', 
+                        'as': 'result'
+                    }
+                }, {
+                    '$addFields': {
+                        'l1Name': {
+                            '$arrayElemAt': [
+                                '$result.empName', 0
+                            ]
+                        }, 
+                        'liEmail': {
+                            '$arrayElemAt': [
+                                '$result.email', 0
+                            ]
+                        }
+                    }
+                }, {
+                    '$project': {
+                        'L1Approver': 0, 
+                        'result': 0
+                    }
+                }
+            ]
+            user = cmo.finding_aggregate("userRegister",mailAggregation)['data']
+            try:
+                user = user[0]
+                userName = user['empName']
+                userCode = user['ustCode']
+                approverName = user['l1Name']
+                approverEmail = user['liEmail'].strip()
+                amount = str(Amount)
+                cmailer.formatted_sendmail(to=[approverEmail],cc=[],subject=ExpenseNo,message=cmt.expense_mail(userName,userCode,approverName,ExpenseNo,amount),type="L1")
+            except Exception as e:
+                pass
             
             return respond(Response)
+        
+
+
         if id != None and id != "undefined":
             arr = [
                 {
@@ -3879,8 +3932,8 @@ def ExpensesDAFillProjectId(current_user, id=None):
             return jsonify({"msg": "id not found"})
 
 
-@expenses_blueprint.route("/expenses/fillDA", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-@expenses_blueprint.route("/expenses/fillDA/<id>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+@expenses_blueprint.route("/expenses/fillDA", methods=["GET", "POST","DELETE"])
+@expenses_blueprint.route("/expenses/fillDA/<id>", methods=["GET", "POST","DELETE"])
 @token_required
 def expensesFillDA(current_user, id=None):
 
@@ -4155,14 +4208,6 @@ def expensesFillDA(current_user, id=None):
             if data['totalDays'] in ["","undefined",None]:
                 data['totalDays'] = 1
 
-
-
-
-            
-            
-            siteandTaskmatchingData = {
-                "Amount": Amount,
-            }
             if is_valid_mongodb_objectid(claimType):
                 claimType = ObjectId(claimType)
             else:
@@ -4229,7 +4274,6 @@ def expensesFillDA(current_user, id=None):
                     }
                 },
             ]
-            # print("ghklgfdfghjkl;", arr)
             dataTomatch = cmo.finding_aggregate("mergerDesignationClaim", arr)["data"]
             if len(dataTomatch):
                 dataTomatch = dataTomatch[0]
@@ -4271,9 +4315,6 @@ def expensesFillDA(current_user, id=None):
                     data["designation"] = rtyuuytrt[0]["designation"]
             if claimType is not None and claimType != "undefined":
                 ExpenseNo = "EXP"
-
-                
-
                 if len(shortcodeData) > 0:
                     ExpenseNo = ExpenseNonewLogic()
                         
@@ -4356,7 +4397,6 @@ def expensesFillDA(current_user, id=None):
                             "msg": f"Please Try Again,System is in Another Process",
                         }
                     )
-            cmo.insertion("TestingExpenses",{'userId':datatoinsert['addedFor'],'ExpenseNo':ExpenseNo})
 
             Response = cmo.insertion("Expenses", datatoinsert)
 
@@ -6510,24 +6550,19 @@ def DownloadAttachment(id=None):
                 # print("ResponseRespggggonseResponse", Response)
             if len(Response["data"]):
                 Response = Response["data"]
-                try:
-                    title = "Expense/Advance Report"
-                    output_path = os.path.join(
-                        os.getcwd(), "uploads", "Expense_Report.pdf"
-                    )
-                    pdf_buffer = generate_pdf_from_dict(Response, output_path, title)
-                    # print("pdfffpathhhhhhh", output_path)
-                    return send_file(output_path)
-                    # return send_file(output_path, as_attachment=True, download_name='Expense_Report.pdf', mimetype='application/pdf')
-                except Exception as e:
-                    # print("uuuuu", e)
-                    return respond(
-                        {
-                            "status": 400,
-                            "icon": "error",
-                            "msg": "Some thing went Wrong",
-                        }
-                    )
+                # try:
+                title = "Expense/Advance Report"
+                output_path = os.path.join(os.getcwd(), "uploads", "Expense_Report.pdf")
+                generate_pdf_from_dict(Response, output_path, title)
+                return send_file(output_path)
+                # except Exception as e:
+                #     return respond(
+                #         {
+                #             "status": 400,
+                #             "icon": "error",
+                #             "msg": "Some thing went Wrong",
+                #         }
+                #     )
 
             else:
                 return respond(

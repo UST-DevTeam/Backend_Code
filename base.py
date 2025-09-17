@@ -225,51 +225,6 @@ def respond(userRole,data=None,typeuser=None):
         if("password" in userRole['data']):
             del userRole['data']['password']
     myResponse=0
-    # print(data)
-    # if(data=="Login"):
-    #     if(userRole["state"]==4):
-    #         if(len(userRole["data"])!=0):
-    #             myResponse=200
-    #             uniqueid=userRole["data"][0]["uniqueid"]
-    #             expisre=datetime.utcnow() + timedelta(days=7)
-    #             userRole["data"][0]["expiresIn"]="36000" #10 Hour session expire 
-
-                
-    #             roleName=userRole["data"][0]["rolename"]
-    #             print(userRole,"userRole")
-    #             cmo.updating(typeuser,{"_id":ObjectId(uniqueid)},{"isLogin":True,"expiresIn":"36000"},False)
-    #             token = jwt.encode({'uniqueid': uniqueid, 'exp' : expisre},key=os.environ.get("SECRET_KEY"),algorithm="HS512")  
-    #             # return jsonify({'token' : token.decode('UTF-8')})
-    #             userRole["data"][0]["idToken"]=token
-                
-    #             print(userRole,"userRole")
-    #             response = make_response()
-    #             response.headers['Authorization'] = "Bearer "+token
-    #             response.data = json.dumps(userRole["data"][0])
-    #             print(response,"responseresponse")
-    #             log_manager.response(response)
-
-    #             print(response,roleName,"response")
-
-    #             if(roleName=="Tower Crew"):
-    #                 userFinal={
-    #                     "state":2,
-    #                     "msg":"You Have No Access to use Web Portal",
-    #                     "data":[],
-    #                 }
-    #                 return jsonify(userFinal), 401
-    #             return response
-    #             return jsonify(token), myResponse
-
-    #         else:
-    #             userFinal={
-    #                 "state":2,
-    #                 "msg":"Please Use Valid Credentials",
-    #                 "data":[],
-    #             }
-    #             return jsonify(userFinal), 401
-
-
 
     if(userRole["status"]==201):
         myResponse=201

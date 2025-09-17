@@ -3752,7 +3752,7 @@ def exp_approval_mail(data,current_user):
             userId = response[0]['addedFor']
             totalAmount = response[0]['Amount']
             Id = i['ExpenseNo']
-            if data['customisedStatus'] == 6:
+            if data['customisedStatus'] == 4:
                 approveAmount = totalAmount
             else:
                 approveAmount = 0
@@ -3762,8 +3762,8 @@ def exp_approval_mail(data,current_user):
                 userMail = user['email'].strip()
                 userName = user['empName']
                 userCode = user['empCode']
-                approvermail = cmo.finding("userRegister",{'_id':ObjectId(current_user['userUniqueId'])})['data'][0]['email'].strip()
-                cmailer.formatted_sendmail(to=[userMail],cc=[],subject=Id+" "+approver,message=cmt.ClaimType_mail(userName,userCode,Id,totalAmount,type,approver,approveAmount)) 
+                # approvermail = cmo.finding("userRegister",{'_id':ObjectId(current_user['userUniqueId'])})['data'][0]['email'].strip()
+                cmailer.formatted_sendmail(to=[userMail],cc=[],subject=Id+" "+approver,message=cmt.ClaimType_mail(userName,userCode,Id,totalAmount,type,approver,approveAmount),type="user") 
            
 def adv_approval_mail(data,current_user):
     approver = data['approver']
@@ -3816,10 +3816,6 @@ def approvalStatus(current_user, id=None):
             for i in data["data"]:
                 if 'ApprovedAmount' in i:
                     if (i["ApprovedAmount"] == None or i["ApprovedAmount"] == "undefined" or i["ApprovedAmount"] == 0):
-                        # if data["customisedStatus"] in [2, 1, 4, 6]:
-                        #     i["ApprovedAmount"] = int(i["Amount"])
-                        # else:
-                        #     i["ApprovedAmount"] = 0
                         if data["customisedStatus"] not in [3,5,7]:
                             return respond(
                                     {
@@ -3926,22 +3922,106 @@ def approvalStatus(current_user, id=None):
                     del newData['addedFor'] 
                 
                 Response = cmo.updating("Expenses", lookData, newData, False)
-                
-            if data['customisedStatus'] in [3,5,6,7]:
+
+            mailAggregation = [
+                {
+                    '$match': {
+                        '_id': ObjectId(data['addedFor'])
+                    }
+                }, {
+                    '$project': {
+                        'empName': 1, 
+                        'ustCode': {
+                            '$toString': '$ustCode'
+                        }, 
+                        'email': 1, 
+                        'L1Approver': {
+                            '$toObjectId': '$L1Approver'
+                        }, 
+                        'L2Approver': {
+                            '$toObjectId': '$L2Approver'
+                        }, 
+                        '_id': 0
+                    }
+                }, {
+                    '$lookup': {
+                        'from': 'userRegister', 
+                        'localField': 'L1Approver', 
+                        'foreignField': '_id', 
+                        'as': 'l1result'
+                    }
+                }, {
+                    '$lookup': {
+                        'from': 'userRegister', 
+                        'localField': 'L2Approver', 
+                        'foreignField': '_id', 
+                        'as': 'l2result'
+                    }
+                }, {
+                    '$addFields': {
+                        'l2Name': {
+                            '$arrayElemAt': [
+                                '$l2result.empName', 0
+                            ]
+                        }, 
+                        'l2Email': {
+                            '$arrayElemAt': [
+                                '$l2result.email', 0
+                            ]
+                        }, 
+                        'l2Code': {
+                            '$arrayElemAt': [
+                                '$l2result.ustCode', 0
+                            ]
+                        }, 
+                        'l1Name': {
+                            '$arrayElemAt': [
+                                '$l1result.empName', 0
+                            ]
+                        }, 
+                        'l1Email': {
+                            '$arrayElemAt': [
+                                '$l1result.email', 0
+                            ]
+                        }, 
+                        'l1Code': {
+                            '$arrayElemAt': [
+                                '$l1result.ustCode', 0
+                            ]
+                        }
+                    }
+                }, {
+                    '$project': {
+                        'L1Approver': 0, 
+                        'L2Approver': 0, 
+                        'l1result': 0, 
+                        'l2result': 0
+                    }
+                }
+            ] 
+            user = cmo.finding_aggregate("userRegister",mailAggregation)['data']  
+            try:
+                user = user[0]
                 approver = data['approver']
                 type = data['type']
                 Id = data['expenseId']
                 totalAmount = sum(item['Amount'] for item in data['data'])
                 approveAmount = sum(item['ApprovedAmount'] for item in data['data'])
-                user = cmo.finding("userRegister",{'_id':ObjectId(data['addedFor'])})['data'][0]
                 userMail = user['email'].strip()
                 userName = user['empName']
-                userCode = user['empCode']
-                approvermail = cmo.finding("userRegister",{'_id':ObjectId(current_user['userUniqueId'])})['data'][0]['email'].strip()
-                try:
-                    cmailer.formatted_sendmail(to=[userMail],cc=[approvermail],subject=Id+" "+approver,message=cmt.ClaimType_mail(userName,userCode,Id,totalAmount,type,approver,approveAmount))
-                except Exception as e:
-                    pass
+                userCode = user['ustCode']
+                l2ApproverName = user['l2Name']
+                l2ApproverEmail = user['l2Email'].strip()
+                l2ApproverCode = user['l2Code']
+                l1ApproverName = user['l1Name']
+                l1ApproverEmail = user['l1Email'].strip()
+                l1ApproverCode = user['l1Code']
+                if data['customisedStatus'] == 2:
+                    cmailer.formatted_sendmail(to=[l2ApproverEmail],cc=[],subject=Id+" "+approver,message=cmt.approver_mail(l2ApproverName,userName,userCode,Id,totalAmount,type,approver,approveAmount,l1ApproverName,l1ApproverCode),type="L1")
+                elif data['customisedStatus'] in [3,4,5]:
+                    cmailer.formatted_sendmail(to=[userMail],cc=[],subject=Id+" "+approver,message=cmt.ClaimType_mail(userName,userCode,Id,totalAmount,type,approver,approveAmount),type="user")
+            except Exception as e:
+                pass
             return respond(Response)
 
         if data["type"] == "Advance":
@@ -4071,9 +4151,9 @@ def approvalStatus(current_user, id=None):
                                 "icon": "error",
                             }
                         )
-                if data['customisedStatus'] in [3,5,6,7]:
-                    thread = Thread(target=adv_approval_mail, args=(data,current_user))
-                    thread.start()
+                # if data['customisedStatus'] in [3,5,6,7]:
+                #     thread = Thread(target=adv_approval_mail, args=(data,current_user))
+                #     thread.start()
                 return respond(Response)
 
 
@@ -4318,7 +4398,7 @@ def approvalStatusBulk(current_user, id=None):
                             "icon": "error",
                         }
                     )
-            if data['customisedStatus'] in [3,5,6,7]:
+            if data['customisedStatus'] in [4,5]:
                 thread = Thread(target=exp_approval_mail, args=(data,current_user))
                 thread.start()
             return respond(Response)
@@ -7947,325 +8027,6 @@ def claimsAndAdvance(current_user, id=None):
     
     
 
-
-
-# @approval_blueprint.route("/Advance/AllAdvance", methods=["GET", "POST"])
-# @approval_blueprint.route("/Advance/AllAdvance/<id>", methods=["GET", "POST", "DELETE"])
-# @token_required
-# def AllAdvances(current_user, id=None):
-#     if request.method == "GET":
-#         arr = [
-#             {
-#                 "$lookup": {
-#                     "from": "userRegister",
-#                     "localField": "addedFor",
-#                     "foreignField": "_id",
-#                     "pipeline": [
-#                         {
-#                             "$match": {
-#                                 "deleteStatus": {"$ne": 1},
-#                                 "reportingManager": current_user["userUniqueId"],
-#                             }
-#                         }
-#                     ],
-#                     "as": "userInfo",
-#                 }
-#             },
-#             {"$addFields": {"len": {"$size": "$userInfo"}}},
-#             {"$match": {"len": {"$ne": 0}}},
-#             {
-#                 "$lookup": {
-#                     "from": "project",
-#                     "localField": "projectId",
-#                     "foreignField": "_id",
-#                     "pipeline": [
-#                         {"$match": {"deleteStatus": {"$ne": 1}}},
-#                         {
-#                             "$lookup": {
-#                                 "from": "projectGroup",
-#                                 "localField": "projectGroup",
-#                                 "foreignField": "_id",
-#                                 "pipeline": [
-#                                     {"$match": {"deleteStatus": {"$ne": 1}}},
-#                                     {
-#                                         "$lookup": {
-#                                             "from": "costCenter",
-#                                             "localField": "costCenterId",
-#                                             "foreignField": "_id",
-#                                             "pipeline": [
-#                                                 {
-#                                                     "$match": {
-#                                                         "deleteStatus": {"$ne": 1}
-#                                                     }
-#                                                 },
-#                                                 {
-#                                                     "$project": {
-#                                                         "_id": 0,
-#                                                         "costCenter": 1,
-#                                                     }
-#                                                 },
-#                                             ],
-#                                             "as": "costcenterresult",
-#                                         }
-#                                     },
-#                                     {
-#                                         "$addFields": {
-#                                             "costcenter": "$costcenterresult.costCenter"
-#                                         }
-#                                     },
-#                                     {
-#                                         "$unwind": {
-#                                             "path": "$costcenter",
-#                                             "preserveNullAndEmptyArrays": True,
-#                                         }
-#                                     },
-#                                 ],
-#                                 "as": "projectGroupResult",
-#                             }
-#                         },
-#                         {
-#                             "$unwind": {
-#                                 "path": "$projectGroupResult",
-#                                 "preserveNullAndEmptyArrays": True,
-#                             }
-#                         },
-#                         {
-#                             "$addFields": {
-#                                 "costcenter": "$projectGroupResult.costcenter",
-#                                 "circle": {"$toObjectId": "$circle"},
-#                             }
-#                         },
-#                         {
-#                             "$lookup": {
-#                                 "from": "circle",
-#                                 "localField": "circle",
-#                                 "foreignField": "_id",
-#                                 "pipeline": [
-#                                     {"$match": {"deleteStatus": {"$ne": 1}}},
-#                                     {
-#                                         "$project": {
-#                                             "_id": 0,
-#                                             "circleName": 1,
-#                                             "circleCode": 1,
-#                                         }
-#                                     },
-#                                 ],
-#                                 "as": "circleResult",
-#                             }
-#                         },
-#                         {
-#                             "$unwind": {
-#                                 "path": "$circleResult",
-#                                 "preserveNullAndEmptyArrays": True,
-#                             }
-#                         },
-#                     ],
-#                     "as": "projectResult",
-#                 }
-#             },
-#             {"$unwind": {"path": "$projectResult", "preserveNullAndEmptyArrays": True}},
-#             {"$unwind": {"path": "$userInfo", "preserveNullAndEmptyArrays": True}},
-#             {
-#                 "$addFields": {
-#                     "L1ApproverStatus": {"$arrayElemAt": ["$L1Approver.status", 0]},
-#                     "L1ApproverId": {"$arrayElemAt": ["$L1Approver.actionBy", 0]},
-#                     "L2ApproverStatus": {"$arrayElemAt": ["$L2Approver.status", 0]},
-#                     "L2ApproverId": {"$arrayElemAt": ["$L2Approver.actionBy", 0]},
-#                     "L3ApproverStatus": {"$arrayElemAt": ["$L3Approver.status", 0]},
-#                     "L3ApproverId": {"$arrayElemAt": ["$L3Approver.actionBy", 0]},
-#                 }
-#             },
-#             {
-#                 "$lookup": {
-#                     "from": "userRegister",
-#                     "localField": "L1ApproverId",
-#                     "foreignField": "_id",
-#                     "pipeline": [
-#                         {"$match": {"deleteStatus": {"$ne": 1}}},
-#                         {"$project": {"_id": 0, "empName": 1}},
-#                     ],
-#                     "as": "L1ApproverResult",
-#                 }
-#             },
-#             {
-#                 "$unwind": {
-#                     "path": "$L1ApproverResult",
-#                     "preserveNullAndEmptyArrays": True,
-#                 }
-#             },
-#             {
-#                 "$lookup": {
-#                     "from": "userRegister",
-#                     "localField": "L2ApproverId",
-#                     "foreignField": "_id",
-#                     "pipeline": [
-#                         {"$match": {"deleteStatus": {"$ne": 1}}},
-#                         {"$project": {"_id": 0, "empName": 1}},
-#                     ],
-#                     "as": "L2ApproverResult",
-#                 }
-#             },
-#             {
-#                 "$unwind": {
-#                     "path": "$L2ApproverResult",
-#                     "preserveNullAndEmptyArrays": True,
-#                 }
-#             },
-#             {
-#                 "$lookup": {
-#                     "from": "userRegister",
-#                     "localField": "L3ApproverId",
-#                     "foreignField": "_id",
-#                     "pipeline": [
-#                         {"$match": {"deleteStatus": {"$ne": 1}}},
-#                         {"$project": {"_id": 0, "empName": 1}},
-#                     ],
-#                     "as": "L3ApproverResult",
-#                 }
-#             },
-#             {
-#                 "$unwind": {
-#                     "path": "$L3ApproverResult",
-#                     "preserveNullAndEmptyArrays": True,
-#                 }
-#             },
-#             {
-#                 "$addFields": {
-#                     "CreatedAt": {"$toDate": "$CreatedAt"},
-#                     "actionAt": {"$toDate": "$actionAt"},
-#                     "empName": "$userInfo.empName",
-#                     "empCode": "$userInfo.empCode",
-#                     "mobile": "$userInfo.mobile",
-#                 }
-#             },
-#             {
-#                 "$addFields": {
-#                     "month": {
-#                         "$switch": {
-#                             "branches": [
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 1]},
-#                                     "then": "Jan",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 2]},
-#                                     "then": "Feb",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 3]},
-#                                     "then": "Mar",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 4]},
-#                                     "then": "Apr",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 5]},
-#                                     "then": "May",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 6]},
-#                                     "then": "Jun",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 7]},
-#                                     "then": "Jul",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 8]},
-#                                     "then": "Aug",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 9]},
-#                                     "then": "Sep",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 10]},
-#                                     "then": "Oct",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 11]},
-#                                     "then": "Nov",
-#                                 },
-#                                 {
-#                                     "case": {"$eq": [{"$month": "$CreatedAt"}, 12]},
-#                                     "then": "Dec",
-#                                 },
-#                             ],
-#                             "default": None,
-#                         }
-#                     },
-#                     "year": {"$year": "$CreatedAt"},
-#                 }
-#             },
-#             {"$addFields": {"year": {"$toString": "$year"}}},
-#             {
-#                 "$addFields": {
-#                     "AdvanceDate": {
-#                         "$dateToString": {"format": "%Y-%m-%d", "date": "$CreatedAt"}
-#                     },
-#                     "ActionAt": {
-#                         "$dateToString": {"format": "%Y-%m-%d", "date": "$actionAt"}
-#                     },
-#                     "Month": {"$concat": ["$month", "-", "$year"]},
-#                     "circleCode": "$projectResult.circleResult.circleCode",
-#                     "circleName": "$projectResult.circleResult.circleName",
-#                     "projectIdName": "$projectResult.projectId",
-#                     "costcenter": "$projectResult.costcenter",
-#                 }
-#             },
-#             {
-#                 "$lookup": {
-#                     "from": "claimType",
-#                     "localField": "advanceTypeId",
-#                     "foreignField": "_id",
-#                     "pipeline": [{"$match": {"deleteStatus": {"$ne": 1}}}],
-#                     "as": "advanceTypeResult",
-#                 }
-#             },
-#             {
-#                 "$unwind": {
-#                     "path": "$advanceTypeResult",
-#                     "preserveNullAndEmptyArrays": True,
-#                 }
-#             },
-#             {"$addFields": {"advanceType": "$advanceTypeResult.claimType"}},
-#             {
-#                 "$project": {
-#                     "Month": "$Month",
-#                     "Employee Name": "$empName",
-#                     "Employee Code": "$empCode",
-#                     "Contact Number": "$mobile",
-#                     "Advance number": "$AdvanceNo",
-#                     "Advance Date": "$AdvanceDate",
-#                     "Advance Type": "$advanceType",
-#                     "Circle": "$circleName",
-#                     "Project ID": "$projectIdName",
-#                     "Cost Center": "$costcenter",
-#                     "Amount": "$Amount",
-#                     "Submission Date": "$AdvanceDate",
-#                     "Approved Amount": "$ApprovedAmount",
-#                     "Last Action Date": "$ActionAt",
-#                     "L1 Status": "$L1ApproverStatus",
-#                     "L2 Status": "$L2ApproverStatus",
-#                     "L3 Status": "$L3ApproverStatus",
-#                     "L1 Approver": "$L1ApproverResult.empName",
-#                     "L2 Approver": "$L2ApproverResult.empName",
-#                     "L3 Approver": "$L3ApproverResult.empName",
-#                     "Remarks": "$remark",
-#                     "uniqueId": {"$toString": "$_id"},
-#                     "_id": 0,
-#                 }
-#             },
-#         ]
-
-#         Response = cmo.finding_aggregate("Advance", arr)
-#         return respond(Response)
-#     if request.method == "DELETE":
-#         if id != None and id != "undefined":
-#             cmo.deleting("Approval", id)
-#             Response = cmo.deleting("Advance", id)
-#             return respond(Response)
 
 
 @approval_blueprint.route("/Advance/AllAdvance", methods=["GET", "POST"])

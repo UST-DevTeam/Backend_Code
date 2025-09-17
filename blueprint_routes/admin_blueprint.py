@@ -4,6 +4,7 @@ from common.config import changedThings3 as changedThings3
 from common.config import changedThings4 as changedThings4
 from blueprint_routes.currentuser_blueprint import projectId_Object
 from common.config import unique_timestampexpense
+
 admin_blueprint = Blueprint('admin_blueprint', __name__)
 
 
@@ -21,6 +22,189 @@ def current_time():
     current_time = datetime.now(ist)
     formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
     return formatted_time
+
+   
+@admin_blueprint.route('/admin/manageCircle', methods=['GET', "POST", "PUT", "PATCH", "DELETE"])
+@admin_blueprint.route('/admin/manageCircle/<id>', methods=['GET', "POST", "PUT", "PATCH", "DELETE"])
+@token_required
+def managecircle(current_user, id=None):
+    if request.method == "GET":
+        arra = []
+        if request.args.get("customer") != None and request.args.get("customer") != "":
+            arra = arra + [
+                {
+                    '$match': {
+                        'customer': ObjectId(request.args.get("customer"))
+                    }
+                }
+            ]
+        arra = arra + [
+            {
+                '$lookup': {
+                    'from': 'customer',
+                    'localField': 'customer',
+                    'foreignField': '_id',
+                    'pipeline': [{'$match': {'deleteStatus': {'$ne': 1}}}],
+                    'as': 'result'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$result',
+                    'preserveNullAndEmptyArrays': True
+                }
+            }, {
+                '$addFields': {
+                    'customerName': '$result.customerName',
+                    'uniqueId': {
+                        '$toString': '$_id'
+                    },
+                    'customer': {
+                        '$toString': '$customer'
+                    }
+                }
+            }, {
+                '$project': {
+                    '_id': 0,
+                    'result': 0
+                }
+            }
+        ]
+        arra = arra + apireq.commonarra + apireq.args_pagination(request.args)
+        response = cmo.finding_aggregate("circle", arra)
+        return respond(response)
+
+    elif request.method == "POST":
+        if id == None:
+            allData = request.get_json()
+            arra = [
+                {
+                    '$match': {
+                        'customer': ObjectId(allData['customer']),
+                        'circleCode': allData['circleCode']
+
+                    }
+                }
+            ]
+            response = cmo.finding_aggregate("circle", arra)
+            if len(response['data']):
+                return {
+                    "status": 400,
+                    "msg": "This circle is Already Exist",
+                    "icon": "error",
+                }, 400
+
+            if 'customer' in allData:
+                allData['customer'] = ObjectId(allData['customer'])
+
+            try:
+                arr = [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            },
+                            '_id': allData['customer']
+                        }
+                    }, {
+                        '$project': {
+                            'customerName': 1,
+                            '_id': 0
+                        }
+                    }
+                ]
+                Response = cmo.finding_aggregate("customer", arr)['data']
+                if len(Response):
+                    customere = Response[0]['customerName']
+                    Band = None
+                    if 'band' in allData:
+                        Band = allData['band']
+                    # Added="The circle Name "+allData['circleName'] +' with circle Code '+allData['circleCode']+' and band '+Band+' added in '+customere+' Customer '
+                    Added = "The circle Name"+" " + \
+                        allData['circleName'] + " Added"
+                    cmo.insertion("AdminLogs", {'type': 'Add', 'module': 'circle', 'actionAt': current_time(
+                    ), 'actionBy': ObjectId(current_user['userUniqueId']), 'action': Added})
+            except Exception as e:
+                print('Hello', e)
+
+            response = cmo.insertion("circle", allData)
+
+            return respond(response)
+
+        elif id != None:
+            circleCode = request.json.get("circleCode")
+            circleName = request.json.get("circleName")
+            customer = ObjectId(request.json.get("customer"))
+            band = request.json.get("band")
+            allData = {
+                'circleCode': circleCode,
+                "circleName": circleName,
+                "customer": customer,
+                "band": band
+            }
+            lookData = {
+                '_id': ObjectId(id)
+            }
+            try:
+                arr = [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            },
+                            '_id': ObjectId(id)
+                        }
+                    }, {
+                        '$project': {
+                            '_id': 0
+                        }
+                    }
+                ]
+                Responsed = cmo.finding_aggregate("circle", arr)['data']
+                allData2 = Responsed[0]
+                changedThings = changedThings2(allData, allData2)
+                print('changedThingschangedThingschangedThings', changedThings)
+                # Added="The circle Name "+allData['circleName'] +' with circle Code '+allData['circleCode']+' and band '+Band+' added in '+customere+' Customer '
+                Added = changedThings+" updated in this circle " + \
+                    allData['circleName']
+                cmo.insertion("AdminLogs", {'type': 'Update', 'module': 'circle', 'actionAt': current_time(
+                ), 'actionBy': ObjectId(current_user['userUniqueId']), 'action': Added})
+            except Exception as e:
+                print(e, 'dhhdhdhhdh')
+
+            response = cmo.updating("circle", lookData, allData, False)
+            return respond(response)
+
+    elif request.method == "DELETE":
+        if id != None:
+            arr = [
+                {
+                    '$match': {
+                        'deleteStatus': {
+                            '$ne': 1
+                        },
+                        '_id': ObjectId(id)
+                    }
+                }, {
+                    '$project': {
+                        'circleName': 1,
+                        '_id': 0
+                    }
+                }
+            ]
+            Response = cmo.finding_aggregate("circle", arr)['data']
+            Circle = None
+            if len(Response):
+                Circle = Response[0]['circleName']
+                Added = "Deleted This circle "+Circle
+                cmo.insertion("AdminLogs", {'type': 'Delete', 'module': 'circle', 'actionAt': current_time(
+                ), 'actionBy': ObjectId(current_user['userUniqueId']), 'action': Added})
+
+            response = cmo.deleting("circle", id, current_user['userUniqueId'])
+            return respond(response)
+        else:
+            return jsonify({'msg': 'Please provide valid Unique Id'})
+
+
 
 
 @admin_blueprint.route('/admin/roles', methods=['GET', "POST", "PUT", "PATCH", "DELETE"])

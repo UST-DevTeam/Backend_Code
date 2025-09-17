@@ -322,8 +322,795 @@ def trackingdata(uniqueId=None):
             return respond(Response)
 
 
-@project_blueprint.route("/siteEngineer", methods=["GET", "POST","DELETE"])
-@project_blueprint.route("/siteEngineer/<uniqueId>", methods=["GET", "POST","DELETE"])
+# @project_blueprint.route("/siteEngineer", methods=["GET", "POST","DELETE"])
+# @project_blueprint.route("/siteEngineer/<uniqueId>", methods=["GET", "POST","DELETE"])
+# @token_required
+# def siteengineer(current_user,uniqueId=None):
+    
+#     if request.method == "GET":
+#         if request.args.get("mileStoneName") == None:
+#             arra = [
+#                 {
+#                     '$match':{
+#                         'deleteStatus':{'$ne':1},
+#                         "projectuniqueId": uniqueId
+#                     }
+#                 }, {
+#                     '$sort':{
+#                         '_id':-1
+#                     }
+#                 }
+#             ]
+#             if request.args.get('subProject')!=None and request.args.get("subProject")!="undefined":
+#                 arra = arra + [
+#                     {
+#                         '$match':{
+#                             'SubProjectId':request.args.get('subProject')
+#                         }
+#                     }
+#                 ]
+#             if request.args.get('siteId')!=None and request.args.get("siteId")!="undefined":
+#                 arra = arra + [
+#                     {
+#                         '$match':{
+#                             'FA Code':{
+#                                 '$regex':request.args.get('siteId').strip(),
+#                                 '$options': 'i'
+#                             }
+#                         }
+#                     }
+#                 ]
+#             if request.args.get('siteStatus')!=None and request.args.get("siteStatus")!="undefined":
+#                 arra = arra + [
+#                     {
+#                         '$match':{
+#                             'siteStatus':request.args.get('siteStatus')
+#                         }
+#                     }
+#                 ]
+#             if request.args.get('siteBillingStatus')!=None and request.args.get("siteBillingStatus")!="undefined":
+#                 arra = arra + [
+#                     {
+#                         '$match':{
+#                             'siteBillingStatus':request.args.get('siteBillingStatus')
+#                         }
+#                     }
+#                 ]
+#             arra = arra + apireq.commonarra + apireq.args_pagination(request.args)
+#             arra1 = arra + [
+#                 {
+#                     '$addFields': {
+#                         'SubProjectId': {
+#                             '$toObjectId': '$SubProjectId'
+#                         }, 
+#                         # 'Site_Completion Date1': {
+#                         #     '$cond': {
+#                         #         'if': {
+#                         #             '$or': [
+#                         #                 {
+#                         #                     '$eq': [
+#                         #                         '$Site_Completion Date', None
+#                         #                     ]
+#                         #                 }, {
+#                         #                     '$eq': [
+#                         #                         '$Site_Completion Date', ''
+#                         #                     ]
+#                         #                 }
+#                         #             ]
+#                         #         }, 
+#                         #         'then': None, 
+#                         #         'else': {
+#                         #             '$toDate': '$Site_Completion Date'
+#                         #         }
+#                         #     }
+#                         # }, 
+#                         # 'siteEndDate1': {
+#                         #     '$cond': {
+#                         #         'if': {
+#                         #             '$or': [
+#                         #                 {
+#                         #                     '$eq': [
+#                         #                         '$siteEndDate', None
+#                         #                     ]
+#                         #                 }, {
+#                         #                     '$eq': [
+#                         #                         '$siteEndDate', ''
+#                         #                     ]
+#                         #                 }
+#                         #             ]
+#                         #         }, 
+#                         #         'then': None, 
+#                         #         'else': {
+#                         #             '$toDate': '$siteEndDate'
+#                         #         }
+#                         #     }
+#                         # }
+#                     }
+#                 }, 
+#                 # {
+#                 #     '$addFields': {
+#                         # 'Site_Completion Date': {
+#                         #     '$cond': {
+#                         #         'if': {
+#                         #             '$eq': [
+#                         #                 {
+#                         #                     '$type': '$Site_Completion Date1'
+#                         #                 }, 'date'
+#                         #             ]
+#                         #         }, 
+#                         #         'then': {
+#                         #             '$dateToString': {
+#                         #                 'date': '$Site_Completion Date1', 
+#                         #                 'format': '%d-%m-%Y', 
+#                         #                 'timezone': 'Asia/Kolkata'
+#                         #             }
+#                         #         }, 
+#                         #         'else': ''
+#                         #     }
+#                         # }, 
+#                         # 'siteageing': {
+#                         #     '$cond': {
+#                         #         'if': {
+#                         #             '$eq': [
+#                         #                 {
+#                         #                     '$type': '$Site_Completion Date1'
+#                         #                 }, 'date'
+#                         #             ]
+#                         #         }, 
+#                         #         'then': {
+#                         #             '$round': {
+#                         #                 '$divide': [
+#                         #                     {
+#                         #                         '$subtract': [
+#                         #                             '$siteEndDate1', '$Site_Completion Date1'
+#                         #                         ]
+#                         #                     }, 86400000
+#                         #                 ]
+#                         #             }
+#                         #         }, 
+#                         #         'else': ''
+#                         #     }
+#                         # }
+#                     # }
+#                 # },
+#                 {
+#                     '$lookup': {
+#                         'from': 'milestone', 
+#                         'localField': '_id', 
+#                         'foreignField': 'siteId', 
+#                         'pipeline': [
+#                             {
+#                                 '$match': {
+#                                     'deleteStatus': {
+#                                         '$ne': 1
+#                                     },
+#                                 }
+#                             }, {
+#                                 '$addFields': {
+#                                     '_id': {
+#                                         '$toString': '$_id'
+#                                     }, 
+#                                     'siteId': {
+#                                         '$toString': '$siteId'
+#                                     }, 
+#                                     'uniqueId': {
+#                                         '$toString': '$_id'
+#                                     }, 
+#                                     # 'mileStoneStartDate1': {
+#                                     #     '$toDate': '$mileStoneStartDate'
+#                                     # }, 
+#                                     # 'mileStoneEndtDate1': {
+#                                     #     '$toDate': '$mileStoneEndDate'
+#                                     # }, 
+#                                     # 'CC_Completion Date1': {
+#                                     #     '$cond': {
+#                                     #         'if': {
+#                                     #             '$or': [
+#                                     #                 {
+#                                     #                     '$eq': [
+#                                     #                         '$CC_Completion Date', None
+#                                     #                     ]
+#                                     #                 }, {
+#                                     #                     '$eq': [
+#                                     #                         '$CC_Completion Date', ''
+#                                     #                     ]
+#                                     #                 }
+#                                     #             ]
+#                                     #         }, 
+#                                     #         'then': None, 
+#                                     #         'else': {
+#                                     #             '$toDate': '$CC_Completion Date'
+#                                     #         }
+#                                     #     }
+#                                     # },
+#                                     'CC_Completion Date': {
+#                                         '$dateFromString': {
+#                                             'dateString': '$CC_Completion Date', 
+#                                             'format': '%m-%d-%Y', 
+#                                         }
+#                                     },
+#                                     'assignDate': {
+#                                         '$dateFromString': {
+#                                             'dateString': '$assignDate', 
+#                                             'format': '%m-%d-%Y', 
+#                                         }
+#                                     },
+#                                 }
+#                             }, {
+#                                 '$addFields': {
+#                                     # 'CC_Completion Date': {
+#                                     #     '$cond': {
+#                                     #         'if': {
+#                                     #             '$eq': [
+#                                     #                 {
+#                                     #                     '$type': '$CC_Completion Date1'
+#                                     #                 }, 'date'
+#                                     #             ]
+#                                     #         }, 
+#                                     #         'then': {
+#                                     #             '$dateToString': {
+#                                     #                 'date': '$CC_Completion Date1', 
+#                                     #                 'format': '%m-%d-%Y', 
+#                                     #                 'timezone':"Asia/Kolkata"
+#                                     #             }
+#                                     #         }, 
+#                                     #         'else': ''
+#                                     #     }
+#                                     # }, 
+#                                     # 'taskageing': {
+#                                     #     '$cond': {
+#                                     #         'if': {
+#                                     #             '$eq': [
+#                                     #                 {
+#                                     #                     '$type': '$CC_Completion Date1'
+#                                     #                 }, 'date'
+#                                     #             ]
+#                                     #         }, 
+#                                     #         'then': {
+#                                     #             '$round': {
+#                                     #                 '$divide': [
+#                                     #                     {
+#                                     #                         '$subtract': [
+#                                     #                             '$mileStoneEndtDate1', '$CC_Completion Date1'
+#                                     #                         ]
+#                                     #                     }, 86400000
+#                                     #                 ]
+#                                     #             }
+#                                     #         }, 
+#                                     #         'else': {
+#                                     #             '$round': {
+#                                     #                 '$divide': [
+#                                     #                     {
+#                                     #                         '$subtract': [
+#                                     #                             '$mileStoneEndtDate1', '$$NOW'
+#                                     #                         ]
+#                                     #                     }, 86400000
+#                                     #                 ]
+#                                     #             }
+#                                     #         }
+#                                     #     }
+#                                     # }, 
+#                                     'taskageing': {
+#                                         '$cond': {
+#                                             'if': {
+#                                                 '$eq': ["$mileStoneStatus","Closed"]
+#                                             }, 
+#                                             'then': {
+#                                                 '$round': {
+#                                                     '$divide': [
+#                                                         {
+#                                                             '$subtract': [
+#                                                                 '$CC_Completion Date',"$assignDate"
+#                                                             ]
+#                                                         }, 86400000
+#                                                     ]
+#                                                 }
+#                                             }, 
+#                                             'else': {
+#                                                 '$round': {
+#                                                     '$divide': [
+#                                                         {
+#                                                             '$subtract': [
+#                                                                 '$$NOW',"$assignDate"
+#                                                             ]
+#                                                         }, 86400000
+#                                                     ]
+#                                                 }
+#                                             }
+#                                         }
+#                                     },
+#                                     "assignDate":{
+#                                         '$dateToString':{
+#                                             'date':"$assignDate",
+#                                             'format': '%m-%d-%Y'
+#                                         }
+#                                     },
+#                                     "CC_Completion Date":{
+#                                         '$dateToString':{
+#                                             'date':"$CC_Completion Date",
+#                                             'format': '%m-%d-%Y'
+#                                         }
+#                                     } 
+#                                     # 'mileStoneStartDate': {
+#                                     #     '$dateToString': {
+#                                     #         'date': {
+#                                     #             '$toDate': '$mileStoneStartDate'
+#                                     #         }, 
+#                                     #         'format': '%d-%m-%Y', 
+#                                     #         'timezone': 'Asia/Kolkata'
+#                                     #     }
+#                                     # }, 
+#                                     # 'mileStoneEndDate': {
+#                                     #     '$dateToString': {
+#                                     #         'date': {
+#                                     #             '$toDate': '$mileStoneEndDate'
+#                                     #         }, 
+#                                     #         'format': '%d-%m-%Y', 
+#                                     #         'timezone': 'Asia/Kolkata'
+#                                     #     }
+#                                     # }
+#                                 }
+#                             }, {
+#                                 '$lookup': {
+#                                     'from': 'userRegister', 
+#                                     'localField': 'assignerId', 
+#                                     'foreignField': '_id', 
+#                                     'pipeline': [
+#                                         {
+#                                             '$match': {
+#                                                 'deleteStatus': {
+#                                                     '$ne': 1
+#                                                 }
+#                                             }
+#                                         }, {
+#                                             '$project': {
+#                                                 '_id': 0, 
+#                                                 'assignerName': {
+#                                                     '$ifNull': [
+#                                                         '$empName', '$vendorName'
+#                                                     ]
+#                                                 }, 
+#                                                 'assignerId': {
+#                                                     '$toString': '$_id'
+#                                                 }
+#                                             }
+#                                         }
+#                                     ], 
+#                                     'as': 'assignerResult'
+#                                 }
+#                             }, {
+#                                 '$project': {
+#                                     'assignerId': 0, 
+#                                     'mileStoneStartDate1': 0, 
+#                                     'mileStoneEndtDate1': 0, 
+#                                     'CC_Completion Date1': 0
+#                                 }
+#                             }
+#                         ], 
+#                         'as': 'milestoneArray'
+#                     }
+#                 }
+#             ]
+#             if current_user['roleName']  in ['Field Resource', "Field Employee","Partner"]:
+#                 a = 10
+#                 if request.args.get('subProject')!=None and request.args.get("subProject")!="undefined":
+#                     a = a+1
+#                 if request.args.get('siteId')!=None and request.args.get("siteId")!="undefined":
+#                     a = a+1
+#                 if request.args.get('siteStatus')!=None and request.args.get("siteStatus")!="undefined":
+#                     a = a+1
+#                 if request.args.get('siteBillingStatus')!=None and request.args.get("siteBillingStatus")!="undefined":
+#                     a = a+1
+#                 arra1[a]['$lookup']['pipeline'].insert(0, {
+#                         "$match": {
+#                             'assignerId': ObjectId(current_user['userUniqueId'])
+#                         }
+#                     })
+#                 arra1 = arra1 + [
+#                     {
+#                         '$match':{
+#                             'milestoneArray':{
+#                                 '$ne':[]
+#                             }
+#                         }
+#                     }
+#                 ]
+#             arra = arra1 +[
+#                 {
+#                     "$lookup": {
+#                         "from": "projectType",
+#                         "localField": "SubProjectId",
+#                         "foreignField": "_id",
+#                         'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+#                         "as": "result",
+#                     }
+#                 },
+#                 {"$unwind": {"path": "$result", "preserveNullAndEmptyArrays": True}},
+#                 {
+#                     "$addFields": {
+#                         "projectType": "$result.projectType",
+#                         "subProject": "$result.subProject",
+#                         "_id": {"$toString": "$_id"},
+#                         "SubProjectId": {"$toString": "$SubProjectId"},
+#                         "projectuniqueId": {"$toObjectId": "$projectuniqueId"},
+#                     }
+#                 }, {
+#                     "$lookup": {
+#                         "from": "project",
+#                         "localField": "projectuniqueId",
+#                         "foreignField": "_id",
+#                         "pipeline": [
+#                             {"$match": {"deleteStatus": {"$ne": 1}}},
+#                             {"$addFields": {"PMId": {"$toObjectId": "$PMId"}}},
+#                             {
+#                                 "$lookup": {
+#                                     "from": "userRegister",
+#                                     "localField": "PMId",
+#                                     "foreignField": "_id",
+#                                     'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+#                                     "as": "PMarray",
+#                                 }
+#                             },
+#                             {
+#                                 "$unwind": {
+#                                     "path": "$PMarray",
+#                                     "preserveNullAndEmptyArrays": True,
+#                                 }
+#                             },
+#                             {"$addFields": {"PMName": "$PMarray.empName"}},
+#                             {"$project": {"PMName": 1,"projectId":1, "_id": 0}},
+#                         ],
+#                         "as": "projectArray",
+#                     }
+#                 }, {
+#                     "$unwind": {
+#                         "path": "$projectArray",
+#                         "preserveNullAndEmptyArrays": True,
+#                     }
+#                 }, {
+#                     "$addFields": {
+#                         "PMName": "$projectArray.PMName",
+#                         "projectId":'$projectArray.projectId',
+#                         "siteId": "$siteid",
+#                         "projectuniqueId": {"$toString": "$projectuniqueId"},
+#                         "uniqueId": "$_id",
+#                         # "siteStartDate": {
+#                         #     "$dateToString": {
+#                         #         "date": {"$toDate": "$siteStartDate"},
+#                         #         "format": "%d-%m-%Y",
+#                         #         "timezone": "Asia/Kolkata",
+#                         #     }
+#                         # },
+#                         # "siteEndDate": {
+#                         #     "$dateToString": {
+#                         #         "date": {"$toDate": "$siteEndDate"},
+#                         #         "format": "%d-%m-%Y",
+#                         #         "timezone": "Asia/Kolkata",
+#                         #     }
+#                         # },
+#                     }
+#                 }, {
+#                     "$project": {
+#                         "projectArray": 0,
+#                         "assignerId": 0,
+#                         "result": 0,
+#                         "Site_Completion Date1": 0,
+#                         "siteEndDate1": 0,
+#                     }
+#                 },
+#             ]
+#             response = cmo.finding_aggregate("SiteEngineer", arra)
+#             return respond(response)
+#         else:
+#             arra = [
+#                 {
+#                     '$match':{
+#                         'deleteStatus':{'$ne':1},
+#                         "projectuniqueId": uniqueId
+                   
+#                     }
+#                 }
+#             ]
+#             if current_user['roleName']  in ['Field Resource', "Field Employee","Partner"]:
+#                 arra = [
+#                     {
+#                         '$match':{
+#                             'assignerId':ObjectId(current_user['userUniqueId'])
+#                         }
+#                     }
+#                 ]
+#             arra = arra + [
+#                 {"$match": {"Name": {"$regex": request.args.get("mileStoneName"),'$options': 'i'}}},
+#                 {
+#                     "$addFields": {
+#                         "_id": {"$toString": "$_id"},
+#                         "uniqueId": {"$toString": "$_id"},
+#                         "mileStoneStartDate1": {"$toDate": "$mileStoneStartDate"},
+#                         "mileStoneEndtDate1": {"$toDate": "$mileStoneEndDate"},
+#                         "CC_Completion Date1": {"$toDate": "$CC_Completion Date"},
+#                     }
+#                 },
+#                 {
+#                     "$addFields": {
+#                         "CC_Completion Date": {
+#                             "$cond": {
+#                                 "if": {
+#                                     "$eq": [{"$type": "$CC_Completion Date1"}, "date"]
+#                                 },
+#                                 "then": {
+#                                     "$dateToString": {
+#                                         "date": "$CC_Completion Date1",
+#                                         "format": "%d-%m-%Y",
+#                                         "timezone": "Asia/Kolkata",
+#                                     }
+#                                 },
+#                                 "else": "",
+#                             }
+#                         },
+#                         "taskageing": {
+#                             "$cond": {
+#                                 "if": {
+#                                     "$eq": [{"$type": "$CC_Completion Date1"}, "date"]
+#                                 },
+#                                 "then": {
+#                                     "$round": {
+#                                         "$divide": [
+#                                             {
+#                                                 "$subtract": [
+#                                                     "$mileStoneEndtDate1",
+#                                                     "$CC_Completion Date1",
+#                                                 ]
+#                                             },
+#                                             86400000,
+#                                         ]
+#                                     }
+#                                 },
+#                                 "else": {
+#                                     "$round": {
+#                                         "$divide": [
+#                                             {
+#                                                 "$subtract": [
+#                                                     "$mileStoneEndtDate1",
+#                                                     "$$NOW",
+#                                                 ]
+#                                             },
+#                                             86400000,
+#                                         ]
+#                                     }
+#                                 },
+#                             }
+#                         },
+#                         "mileStoneStartDate": {
+#                             "$dateToString": {
+#                                 "date": {"$toDate": "$mileStoneStartDate"},
+#                                 "format": "%d-%m-%Y",
+#                                 "timezone": "Asia/Kolkata",
+#                             }
+#                         },
+#                         "mileStoneEndDate": {
+#                             "$dateToString": {
+#                                 "date": {"$toDate": "$mileStoneEndDate"},
+#                                 "format": "%d-%m-%Y",
+#                                 "timezone": "Asia/Kolkata",
+#                             }
+#                         },
+#                     }
+#                 },
+#                 {
+#                     "$lookup": {
+#                         "from": "userRegister",
+#                         "localField": "assignerId",
+#                         "foreignField": "_id",
+#                         "pipeline": [
+#                             {
+#                                 "$match":{
+#                                     'deleteStatus':{'$ne':1}
+#                                 }
+#                             }, {
+#                                 "$project": {
+#                                     "_id": 0,
+#                                     "assignerName": "$empName",
+#                                     "assignerId": {"$toString": "$_id"},
+#                                 }
+#                             }
+#                         ],
+#                         "as": "assignerResult",
+#                     }
+#                 },
+#                 {"$project": {"assignerId": 0}},
+#                 {
+#                     "$group": {
+#                         "_id": "$siteId",
+#                         "milestoneArray": {"$addToSet": "$$ROOT"},
+#                         "siteId": {"$first": "$siteId"},
+#                     }
+#                 },
+#                 {
+#                     "$lookup": {
+#                         "from": "SiteEngineer",
+#                         "let": {"projectuniqueId": "$projectuniqueId"},
+#                         "localField": "siteId",
+#                         "foreignField": "_id",
+#                         "pipeline": [
+#                             {
+#                                 "$match": {
+#                                     "projectuniqueId": uniqueId,
+#                                     'deleteStatus':{'$ne':1}
+#                                 }
+#                             },
+#                             {
+#                                 "$addFields": {
+#                                     "SubProjectId": {"$toObjectId": "$SubProjectId"}
+#                                 }
+#                             },
+#                             {
+#                                 "$lookup": {
+#                                     "from": "projectType",
+#                                     "localField": "SubProjectId",
+#                                     "foreignField": "_id",
+#                                     'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+#                                     "as": "SubProjectId",
+#                                 }
+#                             },
+#                             {
+#                                 "$unwind": {
+#                                     "path": "$SubProjectId",
+#                                     "preserveNullAndEmptyArrays": True,
+#                                 }
+#                             },
+#                             {
+#                                 "$addFields": {
+#                                     "SubProject": "$SubProjectId.subProject",
+#                                     "projectuniqueId": {
+#                                         "$toObjectId": "$projectuniqueId"
+#                                     },
+#                                 }
+#                             },
+#                             {"$project": {"SubProjectId": 0}},
+#                             {
+#                                 "$lookup": {
+#                                     "from": "project",
+#                                     "localField": "projectuniqueId",
+#                                     "foreignField": "_id",
+#                                     "pipeline": [
+#                                         {"$match": {"deleteStatus": {"$ne": 1}}},
+#                                         {
+#                                             "$addFields": {
+#                                                 "PMId": {"$toObjectId": "$PMId"}
+#                                             }
+#                                         },
+#                                         {
+#                                             "$lookup": {
+#                                                 "from": "userRegister",
+#                                                 "localField": "PMId",
+#                                                 "foreignField": "_id",
+#                                                 'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+#                                                 "as": "PMarray",
+#                                             }
+#                                         },
+#                                         {
+#                                             "$unwind": {
+#                                                 "path": "$PMarray",
+#                                                 "preserveNullAndEmptyArrays": True,
+#                                             }
+#                                         },
+#                                         {"$addFields": {"PMName": "$PMarray.empName"}},
+#                                         {"$project": {"PMName": 1, "_id": 0}},
+#                                     ],
+#                                     "as": "projectArray",
+#                                 }
+#                             },
+#                             {
+#                                 "$unwind": {
+#                                     "path": "$projectArray",
+#                                     "preserveNullAndEmptyArrays": True,
+#                                 }
+#                             },
+#                         ],
+#                         "as": "siteResult",
+#                     }
+#                 },
+#                 {"$unwind": "$siteResult"},
+#                 {"$project": {"siteResult._id": 0, "_id": 0}},
+#                 {
+#                     "$lookup": {
+#                         "from": "milestone",
+#                         "localField": "siteId",
+#                         "foreignField": "siteId",
+#                         'pipeline':[{'$match':{'deleteStatus':{'$ne':1}}}],
+#                         "as": "result",
+#                     }
+#                 },
+#                 {
+#                     "$addFields": {
+#                         "uniqueId": {"$toString": "$siteId"},
+#                         "siteResult.projectuniqueId": {
+#                             "$toString": "$siteResult.projectuniqueId"
+#                         },
+#                         "siteStartDate": {
+#                             "$dateToString": {
+#                                 "date": {"$toDate": "$siteResult.siteStartDate"},
+#                                 "format": "%d-%m-%Y",
+#                                 "timezone": "Asia/Kolkata",
+#                             }
+#                         },
+#                         "siteEndDate": {
+#                             "$dateToString": {
+#                                 "date": {"$toDate": "$siteResult.siteEndDate"},
+#                                 "format": "%d-%m-%Y",
+#                                 "timezone": "Asia/Kolkata",
+#                             }
+#                         },
+#                         "PMName": "$siteResult.projectArray.PMName",
+#                         "Site Id": "$siteResult.Site Id",
+#                         "subProject": "$siteResult.SubProject",
+#                         "siteName": "$siteResult.sitename",
+#                         "milestoneArray": {
+#                             "$map": {
+#                                 "input": "$milestoneArray",
+#                                 "as": "milestone",
+#                                 "in": {
+#                                     "$mergeObjects": [
+#                                         "$$milestone",
+#                                         {"siteId": {"$toString": "$$milestone.siteId"}},
+#                                     ]
+#                                 },
+#                             }
+#                         },
+#                         "totalCount": {"$size": "$result"},
+#                         "milestoneCount": {"$size": "$milestoneArray"},
+#                     }
+#                 },
+#                 {"$project": {"result": 0, "siteId":0 }},
+#             ]
+#             arra = arra + apireq.commonarra + apireq.args_pagination(request.args)
+#             response = cmo.finding_aggregate("milestone", arra)
+#             return respond(response)
+
+#     if request.method == "POST":
+#         if uniqueId == None:
+#             allData = request.get_json()
+#             Response = cmo.insertion("SiteEngineer", allData)
+#             return respond(Response)
+#         if uniqueId != None:
+#             allData = request.get_json()
+#             lookData = {"_id": ObjectId(uniqueId)}
+#             Response = cmo.updating("SiteEngineer", lookData, allData, False)
+#             return respond(Response)
+
+#     elif request.method == "DELETE":
+#         allData = request.json.get("ids")
+#         if (len(allData)>0):
+#             for i in allData:
+#                 arra = [
+#                     {"$match": {"_id": ObjectId(i)}},
+#                     {"$project": {"projectuniqueId": 1, "_id": 0}},
+#                 ]
+#                 response = cmo.finding_aggregate("SiteEngineer", arra)
+#                 response = response["data"][0]
+#                 projectuniqueId = response["projectuniqueId"]
+#                 cmo.deleting_m("milestone",{'siteId':ObjectId(i)},current_user['userUniqueId'])
+#                 cmo.deleting_m("invoice",{'siteId':i},current_user['userUniqueId'])
+#                 cmo.deleting_m("complianceApproverSaver",{'siteuid':ObjectId(i)},current_user['userUniqueId'])
+#                 # evl.siteDeleteLogs(i, current_user["userUniqueId"], projectuniqueId, "SiteEngineer")
+#                 cmo.deleting("SiteEngineer", i, current_user["userUniqueId"])
+#             return respond({
+#                 'status':200,
+#                 "msg":"Data Deleted Successfully",
+#                 "icon":"error"
+#             })
+#         else:
+#             return respond({
+#                 'msg':'Please Select At least one Site',
+#                 "status":400,
+#                 "icon":"error"
+#             })
+
+
+
+
+@project_blueprint.route("/siteEngineer", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+@project_blueprint.route("/siteEngineer/<uniqueId>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
 @token_required
 def siteengineer(current_user,uniqueId=None):
     
@@ -353,7 +1140,7 @@ def siteengineer(current_user,uniqueId=None):
                 arra = arra + [
                     {
                         '$match':{
-                            'FA Code':{
+                            'Site Id':{
                                 '$regex':request.args.get('siteId').strip(),
                                 '$options': 'i'
                             }
@@ -383,97 +1170,95 @@ def siteengineer(current_user,uniqueId=None):
                         'SubProjectId': {
                             '$toObjectId': '$SubProjectId'
                         }, 
-                        # 'Site_Completion Date1': {
-                        #     '$cond': {
-                        #         'if': {
-                        #             '$or': [
-                        #                 {
-                        #                     '$eq': [
-                        #                         '$Site_Completion Date', None
-                        #                     ]
-                        #                 }, {
-                        #                     '$eq': [
-                        #                         '$Site_Completion Date', ''
-                        #                     ]
-                        #                 }
-                        #             ]
-                        #         }, 
-                        #         'then': None, 
-                        #         'else': {
-                        #             '$toDate': '$Site_Completion Date'
-                        #         }
-                        #     }
-                        # }, 
-                        # 'siteEndDate1': {
-                        #     '$cond': {
-                        #         'if': {
-                        #             '$or': [
-                        #                 {
-                        #                     '$eq': [
-                        #                         '$siteEndDate', None
-                        #                     ]
-                        #                 }, {
-                        #                     '$eq': [
-                        #                         '$siteEndDate', ''
-                        #                     ]
-                        #                 }
-                        #             ]
-                        #         }, 
-                        #         'then': None, 
-                        #         'else': {
-                        #             '$toDate': '$siteEndDate'
-                        #         }
-                        #     }
-                        # }
+                        'Site_Completion Date1': {
+                            '$cond': {
+                                'if': {
+                                    '$or': [
+                                        {
+                                            '$eq': [
+                                                '$Site_Completion Date', None
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                '$Site_Completion Date', ''
+                                            ]
+                                        }
+                                    ]
+                                }, 
+                                'then': None, 
+                                'else': {
+                                    '$toDate': '$Site_Completion Date'
+                                }
+                            }
+                        }, 
+                        'siteEndDate1': {
+                            '$cond': {
+                                'if': {
+                                    '$or': [
+                                        {
+                                            '$eq': [
+                                                '$siteEndDate', None
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                '$siteEndDate', ''
+                                            ]
+                                        }
+                                    ]
+                                }, 
+                                'then': None, 
+                                'else': {
+                                    '$toDate': '$siteEndDate'
+                                }
+                            }
+                        }
                     }
-                }, 
-                # {
-                #     '$addFields': {
-                        # 'Site_Completion Date': {
-                        #     '$cond': {
-                        #         'if': {
-                        #             '$eq': [
-                        #                 {
-                        #                     '$type': '$Site_Completion Date1'
-                        #                 }, 'date'
-                        #             ]
-                        #         }, 
-                        #         'then': {
-                        #             '$dateToString': {
-                        #                 'date': '$Site_Completion Date1', 
-                        #                 'format': '%d-%m-%Y', 
-                        #                 'timezone': 'Asia/Kolkata'
-                        #             }
-                        #         }, 
-                        #         'else': ''
-                        #     }
-                        # }, 
-                        # 'siteageing': {
-                        #     '$cond': {
-                        #         'if': {
-                        #             '$eq': [
-                        #                 {
-                        #                     '$type': '$Site_Completion Date1'
-                        #                 }, 'date'
-                        #             ]
-                        #         }, 
-                        #         'then': {
-                        #             '$round': {
-                        #                 '$divide': [
-                        #                     {
-                        #                         '$subtract': [
-                        #                             '$siteEndDate1', '$Site_Completion Date1'
-                        #                         ]
-                        #                     }, 86400000
-                        #                 ]
-                        #             }
-                        #         }, 
-                        #         'else': ''
-                        #     }
-                        # }
-                    # }
-                # },
-                {
+                }, {
+                    '$addFields': {
+                        'Site_Completion Date': {
+                            '$cond': {
+                                'if': {
+                                    '$eq': [
+                                        {
+                                            '$type': '$Site_Completion Date1'
+                                        }, 'date'
+                                    ]
+                                }, 
+                                'then': {
+                                    '$dateToString': {
+                                        'date': '$Site_Completion Date1', 
+                                        'format': '%d-%m-%Y', 
+                                        'timezone': 'Asia/Kolkata'
+                                    }
+                                }, 
+                                'else': ''
+                            }
+                        }, 
+                        'siteageing': {
+                            '$cond': {
+                                'if': {
+                                    '$eq': [
+                                        {
+                                            '$type': '$Site_Completion Date1'
+                                        }, 'date'
+                                    ]
+                                }, 
+                                'then': {
+                                    '$round': {
+                                        '$divide': [
+                                            {
+                                                '$subtract': [
+                                                    '$siteEndDate1', '$Site_Completion Date1'
+                                                ]
+                                            }, 86400000
+                                        ]
+                                    }
+                                }, 
+                                'else': ''
+                            }
+                        }
+                    }
+                }, {
                     '$lookup': {
                         'from': 'milestone', 
                         'localField': '_id', 
@@ -496,111 +1281,70 @@ def siteengineer(current_user,uniqueId=None):
                                     'uniqueId': {
                                         '$toString': '$_id'
                                     }, 
-                                    # 'mileStoneStartDate1': {
-                                    #     '$toDate': '$mileStoneStartDate'
-                                    # }, 
-                                    # 'mileStoneEndtDate1': {
-                                    #     '$toDate': '$mileStoneEndDate'
-                                    # }, 
-                                    # 'CC_Completion Date1': {
-                                    #     '$cond': {
-                                    #         'if': {
-                                    #             '$or': [
-                                    #                 {
-                                    #                     '$eq': [
-                                    #                         '$CC_Completion Date', None
-                                    #                     ]
-                                    #                 }, {
-                                    #                     '$eq': [
-                                    #                         '$CC_Completion Date', ''
-                                    #                     ]
-                                    #                 }
-                                    #             ]
-                                    #         }, 
-                                    #         'then': None, 
-                                    #         'else': {
-                                    #             '$toDate': '$CC_Completion Date'
-                                    #         }
-                                    #     }
-                                    # },
-                                    'CC_Completion Date': {
-                                        '$dateFromString': {
-                                            'dateString': '$CC_Completion Date', 
-                                            'format': '%m-%d-%Y', 
+                                    'mileStoneStartDate1': {
+                                        '$toDate': '$mileStoneStartDate'
+                                    }, 
+                                    'mileStoneEndtDate1': {
+                                        '$toDate': '$mileStoneEndDate'
+                                    }, 
+                                    'CC_Completion Date1': {
+                                        '$cond': {
+                                            'if': {
+                                                '$or': [
+                                                    {
+                                                        '$eq': [
+                                                            '$CC_Completion Date', None
+                                                        ]
+                                                    }, {
+                                                        '$eq': [
+                                                            '$CC_Completion Date', ''
+                                                        ]
+                                                    }
+                                                ]
+                                            }, 
+                                            'then': None, 
+                                            'else': {
+                                                '$toDate': '$CC_Completion Date'
+                                            }
                                         }
-                                    },
-                                    'assignDate': {
-                                        '$dateFromString': {
-                                            'dateString': '$assignDate', 
-                                            'format': '%m-%d-%Y', 
-                                        }
-                                    },
+                                    }
                                 }
                             }, {
                                 '$addFields': {
-                                    # 'CC_Completion Date': {
-                                    #     '$cond': {
-                                    #         'if': {
-                                    #             '$eq': [
-                                    #                 {
-                                    #                     '$type': '$CC_Completion Date1'
-                                    #                 }, 'date'
-                                    #             ]
-                                    #         }, 
-                                    #         'then': {
-                                    #             '$dateToString': {
-                                    #                 'date': '$CC_Completion Date1', 
-                                    #                 'format': '%m-%d-%Y', 
-                                    #                 'timezone':"Asia/Kolkata"
-                                    #             }
-                                    #         }, 
-                                    #         'else': ''
-                                    #     }
-                                    # }, 
-                                    # 'taskageing': {
-                                    #     '$cond': {
-                                    #         'if': {
-                                    #             '$eq': [
-                                    #                 {
-                                    #                     '$type': '$CC_Completion Date1'
-                                    #                 }, 'date'
-                                    #             ]
-                                    #         }, 
-                                    #         'then': {
-                                    #             '$round': {
-                                    #                 '$divide': [
-                                    #                     {
-                                    #                         '$subtract': [
-                                    #                             '$mileStoneEndtDate1', '$CC_Completion Date1'
-                                    #                         ]
-                                    #                     }, 86400000
-                                    #                 ]
-                                    #             }
-                                    #         }, 
-                                    #         'else': {
-                                    #             '$round': {
-                                    #                 '$divide': [
-                                    #                     {
-                                    #                         '$subtract': [
-                                    #                             '$mileStoneEndtDate1', '$$NOW'
-                                    #                         ]
-                                    #                     }, 86400000
-                                    #                 ]
-                                    #             }
-                                    #         }
-                                    #     }
-                                    # }, 
+                                    'CC_Completion Date': {
+                                        '$cond': {
+                                            'if': {
+                                                '$eq': [
+                                                    {
+                                                        '$type': '$CC_Completion Date1'
+                                                    }, 'date'
+                                                ]
+                                            }, 
+                                            'then': {
+                                                '$dateToString': {
+                                                    'date': '$CC_Completion Date1', 
+                                                    'format': '%d-%m-%Y', 
+                                                    'timezone': 'Asia/Kolkata'
+                                                }
+                                            }, 
+                                            'else': ''
+                                        }
+                                    }, 
                                     'taskageing': {
                                         '$cond': {
                                             'if': {
-                                                '$eq': ["$mileStoneStatus","Closed"]
+                                                '$eq': [
+                                                    {
+                                                        '$type': '$CC_Completion Date1'
+                                                    }, 'date'
+                                                ]
                                             }, 
                                             'then': {
                                                 '$round': {
                                                     '$divide': [
                                                         {
                                                             '$subtract': [
-                                                                '$CC_Completion Date',"$assignDate"
+                                                                '$mileStoneEndtDate1', '$CC_Completion Date1'
                                                             ]
                                                         }, 86400000
                                                     ]
@@ -611,44 +1355,32 @@ def siteengineer(current_user,uniqueId=None):
                                                     '$divide': [
                                                         {
                                                             '$subtract': [
-                                                                '$$NOW',"$assignDate"
+                                                                '$mileStoneEndtDate1', '$$NOW'
                                                             ]
                                                         }, 86400000
                                                     ]
                                                 }
                                             }
                                         }
-                                    },
-                                    "assignDate":{
-                                        '$dateToString':{
-                                            'date':"$assignDate",
-                                            'format': '%m-%d-%Y'
+                                    }, 
+                                    'mileStoneStartDate': {
+                                        '$dateToString': {
+                                            'date': {
+                                                '$toDate': '$mileStoneStartDate'
+                                            }, 
+                                            'format': '%d-%m-%Y', 
+                                            'timezone': 'Asia/Kolkata'
                                         }
-                                    },
-                                    "CC_Completion Date":{
-                                        '$dateToString':{
-                                            'date':"$CC_Completion Date",
-                                            'format': '%m-%d-%Y'
+                                    }, 
+                                    'mileStoneEndDate': {
+                                        '$dateToString': {
+                                            'date': {
+                                                '$toDate': '$mileStoneEndDate'
+                                            }, 
+                                            'format': '%d-%m-%Y', 
+                                            'timezone': 'Asia/Kolkata'
                                         }
-                                    } 
-                                    # 'mileStoneStartDate': {
-                                    #     '$dateToString': {
-                                    #         'date': {
-                                    #             '$toDate': '$mileStoneStartDate'
-                                    #         }, 
-                                    #         'format': '%d-%m-%Y', 
-                                    #         'timezone': 'Asia/Kolkata'
-                                    #     }
-                                    # }, 
-                                    # 'mileStoneEndDate': {
-                                    #     '$dateToString': {
-                                    #         'date': {
-                                    #             '$toDate': '$mileStoneEndDate'
-                                    #         }, 
-                                    #         'format': '%d-%m-%Y', 
-                                    #         'timezone': 'Asia/Kolkata'
-                                    #     }
-                                    # }
+                                    }
                                 }
                             }, {
                                 '$lookup': {
@@ -774,20 +1506,20 @@ def siteengineer(current_user,uniqueId=None):
                         "siteId": "$siteid",
                         "projectuniqueId": {"$toString": "$projectuniqueId"},
                         "uniqueId": "$_id",
-                        # "siteStartDate": {
-                        #     "$dateToString": {
-                        #         "date": {"$toDate": "$siteStartDate"},
-                        #         "format": "%d-%m-%Y",
-                        #         "timezone": "Asia/Kolkata",
-                        #     }
-                        # },
-                        # "siteEndDate": {
-                        #     "$dateToString": {
-                        #         "date": {"$toDate": "$siteEndDate"},
-                        #         "format": "%d-%m-%Y",
-                        #         "timezone": "Asia/Kolkata",
-                        #     }
-                        # },
+                        "siteStartDate": {
+                            "$dateToString": {
+                                "date": {"$toDate": "$siteStartDate"},
+                                "format": "%d-%m-%Y",
+                                "timezone": "Asia/Kolkata",
+                            }
+                        },
+                        "siteEndDate": {
+                            "$dateToString": {
+                                "date": {"$toDate": "$siteEndDate"},
+                                "format": "%d-%m-%Y",
+                                "timezone": "Asia/Kolkata",
+                            }
+                        },
                     }
                 }, {
                     "$project": {
@@ -1105,6 +1837,7 @@ def siteengineer(current_user,uniqueId=None):
                 "status":400,
                 "icon":"error"
             })
+
 
 
 @project_blueprint.route("/milestone", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
@@ -1673,11 +2406,7 @@ def globalSaver(current_user,uniqueId=None):
                 #         + smail["empName"]
                 #         + " using site allocation."
                 #     )
-                listingew.append(
-                    "Allocate a new site to "
-                    + dtewformail["data"][0]["empName"]
-                    + " using site allocation."
-                )
+                listingew.append("Allocate a new site to "+ dtewformail["data"][0]["empName"] + " using site allocation.")
 
                 # if oneas != None:
                 #     evl.siteEngineerLogsDirect(
@@ -1727,7 +2456,7 @@ def globalSaver(current_user,uniqueId=None):
                 return respond(response)
 
 
-@project_blueprint.route("/projectAllocationList/<id>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+@project_blueprint.route("/projectAllocationList/<id>", methods=["GET"])
 def projectallocationlist(id=None):
     arra = [
         {
@@ -1995,7 +2724,6 @@ def closeMilestone(current_user, id=None):
             "Signage WCC":{
                 'Signage PO#':closedData['poNumber'],
                 "Signage Line#":closedData['itemCode'],
-                "Sigange Count":int(closedData['Sigange Count']),
             },
             "Revisit GR Approval":{
                 'Revisit PO#':closedData['poNumber'],
@@ -2006,6 +2734,8 @@ def closeMilestone(current_user, id=None):
                 "Colo Line#":closedData['itemCode']
             },
         }
+        if closedData['mName'] == "Signage WCC" and "Sigange Count" in closedData:
+            dataforSiteUpdation['Signage WCC']['Sigange Count'] = int(closedData['Sigange Count'])
         closedData['qty'] = int(closedData['qty'])
         arra = [
             {

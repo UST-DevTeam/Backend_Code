@@ -2693,7 +2693,7 @@ def export_dataRange():
         {
             '$match': {
                 'customerId': {
-                    "$in":["667d593927f39f1ac03d7863","6735cb7c0e28f3e385b7f0c4"]
+                    "$in":["667d593927f39f1ac03d7863"]
                 }
             }
         },
@@ -2714,12 +2714,12 @@ def export_dataRange():
                 }, 
                 'startDate': {
                     '$dateFromString': {
-                        'dateString': '2025-07-26'
+                        'dateString': '2025-05-26'
                     }
                 }, 
                 'endDate': {
                     '$dateFromString': {
-                        'dateString': '2025-08-25T05:30:00.000+00:00'
+                        'dateString': '2025-09-16T05:30:00.000+00:00'
                     }
                 }
             }
@@ -3114,7 +3114,7 @@ def export_dataRange():
         #     mergedDF = mergedDF.merge(invoicedf,on="siteuid",how="left")
 
 
-        columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date",'Task Name',"Task Owner","Start Date","Due Date","MS Completion Date","Task Closure","Custom Status","Item Code","Billing Status"]
+        columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date",'Task Name',"Task Owner","Start Date","Due Date","MS Completion Date","Task Closure","Custom Status"]
         for col in columns_to_start:
             if col not in mergedDF.columns:
                 mergedDF[col] = ''
@@ -3138,6 +3138,11 @@ def export_fullDump():
     
 
     siteArra = [
+        {
+            '$match':{
+                'customerId':"667d593927f39f1ac03d7863"
+            }
+        }, 
         {
             '$project': {
                 'Site ID': '$Site Id', 
@@ -3419,6 +3424,468 @@ def export_fullDump():
     mergedDF = mergedDF[columns_to_start]
     fullPath = excelWriteFunc.excelFileWriter(mergedDF, "Export_Sites", "Sites")
     return send_file(fullPath)
+
+
+
+@sample_blueprint.route("/export/SitedateRange",methods=['GET'])
+def export_sitedataRange():
+    
+    siteArra = [ 
+        {
+            '$addFields': {
+                'RFAI Date': {
+                    '$toDate': '$RFAI Date'
+                }
+            }
+        }, {
+            '$addFields': {
+                'RFAI Date': {
+                    '$dateAdd': {
+                        'startDate': '$RFAI Date', 
+                        'unit': 'minute', 
+                        'amount': 330
+                    }
+                }, 
+                'startDate': {
+                    '$dateFromString': {
+                        'dateString': '2024-10-01'
+                    }
+                }, 
+                'endDate': {
+                    '$dateFromString': {
+                        'dateString': '2025-09-01T05:30:00.000+00:00'
+                    }
+                }
+            }
+        }, {
+            '$match': {
+                '$expr': {
+                    '$and': [
+                        {
+                            '$gte': [
+                                '$RFAI Date', '$startDate'
+                            ]
+                        }, {
+                            '$lte': [
+                                '$RFAI Date', '$endDate'
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            '$project': {
+                'Site ID': '$Site Id', 
+                'Unique ID': '$Unique ID', 
+                'System ID': '$systemId', 
+                'siteuid': {
+                    '$toString': '$_id'
+                }, 
+                'RFAI Date': 1, 
+                '_id': 0, 
+                'projectGropupId': 1, 
+                'circleId': 1, 
+                'SubProjectId': 1, 
+                'customerId': 1, 
+                'projectuniqueId': 1
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("SiteEngineer",siteArra)['data']
+    siteuid = []
+    for i in response:
+        siteuid.append(ObjectId(i['siteuid']))
+    df2 = pd.DataFrame(response)
+
+    milestoneArra = [
+        # {
+        #     '$match': {
+        #         'SubProjectId': {
+        #             '$in': [
+        #                 '66a8c947e2e6dc3e9e6b486b', '66a8c99fe2e6dc3e9e6b486c', '66a8c9ede2e6dc3e9e6b486d', '676e8be42194233723e123b3'
+        #             ]
+        #         }
+        #     }
+        # },
+        {
+            '$match': {
+                'siteId': {
+                    "$in":siteuid
+                }
+            }
+        },
+        # {
+        #     '$addFields': {
+        #         'CC_Completion Date': {
+        #             '$toDate': '$CC_Completion Date'
+        #         }
+        #     }
+        # }, {
+        #     '$addFields': {
+        #         'CC_Completion Date': {
+        #             '$dateAdd': {
+        #                 'startDate': '$CC_Completion Date', 
+        #                 'unit': 'minute', 
+        #                 'amount': 330
+        #             }
+        #         }, 
+        #         'startDate': {
+        #             '$dateFromString': {
+        #                 'dateString': '2025-07-26'
+        #             }
+        #         }, 
+        #         'endDate': {
+        #             '$dateFromString': {
+        #                 'dateString': '2025-08-25T05:30:00.000+00:00'
+        #             }
+        #         }
+        #     }
+        # }, {
+        #     '$match': {
+        #         '$expr': {
+        #             '$and': [
+        #                 {
+        #                     '$gte': [
+        #                         '$CC_Completion Date', '$startDate'
+        #                     ]
+        #                 }, {
+        #                     '$lte': [
+        #                         '$CC_Completion Date', '$endDate'
+        #                     ]
+        #                 }
+        #             ]
+        #         }
+        #     }
+        # },
+        {
+            '$lookup': {
+                'from': 'userRegister', 
+                'localField': 'assignerId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            }
+                        }
+                    }, {
+                        '$addFields':{
+                            'empCode':{
+                                '$ifNull':['$empCode','$vendorCode']
+                            },
+                            'empName':{
+                                '$ifNull':['$empName','$vendorName']
+                            },
+                        }
+                    }, {
+                        '$addFields': {
+                            'empCode': {
+                                '$toString': '$empCode'
+                            },
+                            'empName': {
+                                '$toString': '$empName'
+                            }
+                        }
+                    }, {
+                        '$addFields': {
+                            'empName': {
+                                '$concat': [
+                                    '$empName', '(', '$empCode', ')'
+                                ]
+                            }
+                        }
+                    }
+                ], 
+                'as': 'result'
+            }
+        }, {
+            '$addFields': {
+                'Task Owner': '$result.empName'
+            }
+        }, {
+            '$addFields': {
+                'Task Owner': {
+                    '$reduce': {
+                        'input': '$Task Owner', 
+                        'initialValue': '', 
+                        'in': {
+                            '$concat': [
+                                '$$value', {
+                                    '$cond': [
+                                        {
+                                            '$eq': [
+                                                '$$value', ''
+                                            ]
+                                        }, '', ','
+                                    ]
+                                }, '$$this'
+                            ]
+                        }
+                    }
+                }
+            }
+        }, {
+            '$project': {
+                'Task Name': '$Name', 
+                'Task Owner': 1, 
+                'Start Date': '$mileStoneStartDate', 
+                'Due Date': '$mileStoneEndDate', 
+                'MS Completion Date': '$CC_Completion Date', 
+                'Task Closure': 1, 
+                'Custom Status': '$mileStoneStatus', 
+                'siteuid': {
+                    '$toString': '$siteId'
+                }, 
+                '_id': 0
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("milestone",milestoneArra)['data']
+    df1 = pd.DataFrame(response)
+        
+
+    pgArra = [
+        {
+            '$match': {
+                'deleteStatus': {
+                    '$ne': 1
+                },
+            }
+        }, {
+            '$lookup': {
+                'from': 'customer', 
+                'localField': 'customerId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            }
+                        }
+                    }
+                ], 
+                'as': 'customer'
+            }
+        }, {
+            '$unwind': {
+                'path': '$customer', 
+                'preserveNullAndEmptyArrays': True
+            }
+        }, {
+            '$lookup': {
+                'from': 'zone', 
+                'localField': 'zoneId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            }
+                        }
+                    }
+                ], 
+                'as': 'zone'
+            }
+        }, {
+            '$unwind': {
+                'path': '$zone', 
+                'preserveNullAndEmptyArrays': True
+            }
+        }, {
+            '$lookup': {
+                'from': 'costCenter', 
+                'localField': 'costCenterId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            }
+                        }
+                    }
+                ], 
+                'as': 'costCenter'
+            }
+        }, {
+            '$unwind': {
+                'path': '$costCenter', 
+                'preserveNullAndEmptyArrays': True
+            }
+        }, {
+            '$addFields': {
+                'costCenter': '$costCenter.costCenter', 
+                'zone': '$zone.shortCode', 
+                'customer': '$customer.shortName'
+            }
+        }, {
+            '$addFields': {
+                'Project Group': {
+                    '$concat': [
+                        '$customer', '-', '$zone', '-', '$costCenter'
+                    ]
+                }, 
+                'projectGropupId': {
+                    '$toString': '$_id'
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0, 
+                'Project Group': 1, 
+                'projectGropupId': 1
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("projectGroup",pgArra)['data']
+    df3 = pd.DataFrame(response)
+
+
+    circleArra = [
+        {
+            '$match': {
+                'deleteStatus': {
+                    '$ne': 1
+                }
+            }
+        }, {
+            '$project': {
+                'circleId': {
+                    '$toString': '$_id'
+                }, 
+                'Circle': '$circleCode', 
+                '_id': 0
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("circle",circleArra)['data']
+    df4 = pd.DataFrame(response)
+
+    mergedDF = df2.merge(df4,on="circleId",how="left")
+
+    subProjectArra = [
+        {
+            '$match': {
+                'deleteStatus': {
+                    '$ne': 1
+                }
+            }
+        }, {
+            '$project': {
+                'SubProjectId': {
+                    '$toString': '$_id'
+                }, 
+                '_id': 0, 
+                'Project Type': '$projectType', 
+                'Sub Project': '$subProject'
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("projectType",subProjectArra)['data']
+    df5 = pd.DataFrame(response)
+
+    mergedDF = mergedDF.merge(df5,on="SubProjectId",how="left")
+
+    projectIdArra = [
+        {
+            '$addFields': {
+                'PMId': {
+                    '$toObjectId': '$PMId'
+                }
+            }
+        }, {
+            '$lookup': {
+                'from': 'userRegister', 
+                'localField': 'PMId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'deleteStatus': {
+                                '$ne': 1
+                            }
+                        }
+                    }, {
+                        '$addFields': {
+                            'empCode': {
+                                '$toString': '$empCode'
+                            }
+                        }
+                    }, {
+                        '$addFields': {
+                            'empName': {
+                                '$concat': [
+                                    '$empName', '(', '$empCode', ')'
+                                ]
+                            }
+                        }
+                    }
+                ], 
+                'as': 'result'
+            }
+        }, {
+            '$project': {
+                '_id': 0, 
+                'projectuniqueId': {
+                    '$toString': '$_id'
+                }, 
+                'Project ID': '$projectId', 
+                'PM Name': {
+                    '$arrayElemAt': [
+                        '$result.empName', 0
+                    ]
+                },
+                'projectGropupId': {
+                    '$toString': '$projectGroup'
+                }
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("project",projectIdArra)['data']
+    df6 = pd.DataFrame(response)
+
+    df6 = df3.merge(df6,on="projectGropupId",how='right')
+
+    mergedDF = mergedDF.merge(df6,on="projectuniqueId",how="left")
+
+    customerArra = [
+        {
+            '$project': {
+                'Customer': '$customerName', 
+                'customerId': {
+                    '$toString': '$_id'
+                }, 
+                '_id': 0
+            }
+        }
+    ]
+    response = cmo.finding_aggregate("customer",customerArra)['data']
+    df7 = pd.DataFrame(response)
+
+    mergedDF = mergedDF.merge(df7,on="customerId",how="left")
+
+    mergedDF = mergedDF.merge(df1,on="siteuid",how="left")
+
+
+
+    columns_to_start = ['Customer', "Project Group","Project ID","Project Type","Sub Project","PM Name","Circle","Site ID","Unique ID","System ID","RFAI Date",'Task Name',"Task Owner","Start Date","Due Date","MS Completion Date","Task Closure","Custom Status"]
+    for col in columns_to_start:
+        if col not in mergedDF.columns:
+            mergedDF[col] = ''
+
+    for col in ['RFAI Date',"Start Date","Due Date","MS Completion Date","Task Closure"]:
+        mergedDF[col] = mergedDF[col].apply(convertToDateBulkExport)
+
+    mergedDF = mergedDF[columns_to_start]
+    fullPath = excelWriteFunc.excelFileWriter(mergedDF, "Export_RFAI", "Task")
+    return send_file(fullPath)
+
+    
+
 
 
 

@@ -185,13 +185,8 @@ def sendmail_any_attachment(uid="",dbname="",query="",imageList=[],to=[],cc=[],s
 def formatted_sendmail(to,cc,subject,message,type=None):
 # create message object instance
     msg = MIMEMultipart()
-
-    
     
     bcc=[]
-    
-    
-    # bcc.append("vishal.yadav@fourbrick.com")
 
     newTo=[]
     for i in to:
@@ -208,9 +203,22 @@ def formatted_sendmail(to,cc,subject,message,type=None):
            
     mail_login = False if os.environ.get("MAIL_LOGIN")=="False" else True
 
-    # print(mail_login,"mail_loginmail_loginmail_login")
     password = os.environ.get("MAIL_PASSCODE")
     msg['From'] = os.environ.get("MAIL_ID")
+
+
+    if type == "user":
+        password = "vsyj qwgr qbdg eakw"
+        msg.replace_header("From", "ust.expenseuser@gmail.com")
+
+    elif type == "L1":
+        password = "zzkd xoch hiqp nobb"
+        msg.replace_header("From", "ustexpanseuser1@gmail.com")
+    
+    
+
+
+
     msg['To'] = ", ".join(newTo)
     msg['Cc'] = ", ".join(newcc)
     msg['Bcc'] = ", ".join(bcc)

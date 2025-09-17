@@ -345,7 +345,7 @@ def ProjectIDBulkUploadTemplate(current_user,custId=None, projectTypeUniqueId=No
         elements_to_remove = ['Site Id', 'RFAI Date', 'Unique ID']       
         T_sengg = [item for item in T_sengg if item not in elements_to_remove]    
             
-        sortCol = ["Customer","Project Group","Project ID","Project Type","Sub Project","Circle","Site Id","Unique ID","RFAI Date"]
+        sortCol = ["Customer","Project ID","Project Type","Sub Project","PJ:Project ID"]
             
         headers = sortCol+T_sengg+T_tarcking+T_issues
         df = pd.DataFrame(columns=headers)
@@ -13678,6 +13678,8 @@ def DownloadAttachmentcompliance(current_user,reportType=None,id=None):
                     'RanCheckListData': 1, 
                     'AcceptanceLogData': 1, 
                     'SnapData': 1, 
+                    'siteuid': {'$toString': '$siteuid'},
+                    'milestoneName': 1,
                     '_id': 0
                 }
             }
@@ -13687,7 +13689,46 @@ def DownloadAttachmentcompliance(current_user,reportType=None,id=None):
             tabData = ["RowData","TemplateData","PlanDetailsData","SiteDetailsData","RanCheckListData","AcceptanceLogData","SnapData"]
             fetchData = fetchData[0]
             if "SnapData" in fetchData:
-                snapData = fetchData['SnapData']
+                milestone_name = fetchData.get('milestoneName')
+                snap_data_dict = fetchData.get("SnapData", {})
+                siteuid = fetchData.get("siteuid")
+                pipeline_site_engg = [
+                    {'$match': {'_id': ObjectId(siteuid)}},
+                    {'$addFields': {'SubProjectId': {'$toObjectId': "$SubProjectId"}}},
+                    {'$lookup': {
+                        'from': 'complianceForm',
+                        'let': {
+                            'subProjectId': '$SubProjectId',
+                            'activity': {'$trim': {'input': '$ACTIVITY'}},
+                            'oem': {'$trim': {'input': '$OEM NAME'}},
+                            'mName': milestone_name
+                        },
+                        'pipeline': [
+                            {'$match': {'deleteStatus': {'$ne': 1}}},
+                            {'$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {'$eq': ['$subProject', '$$subProjectId']},
+                                        {'$eq': ['$activity', '$$activity']},
+                                        {'$eq': ['$oem', '$$oem']},
+                                        {'$eq': ['$complianceMilestone', '$$mName']}
+                                    ]
+                                }
+                            }},
+                            {'$project': {'snap': 1, '_id': 0}}
+                        ],
+                        'as': 'result'
+                    }},
+                    {'$unwind': {'path': '$result', 'preserveNullAndEmptyArrays': True}},
+                    {'$project': {'snap': '$result.snap', '_id': 0}}
+                ]
+                responseSiteEngg = cmo.finding_aggregate("SiteEngineer", pipeline_site_engg)['data']
+                site_snap_array = responseSiteEngg[0].get("snap", []) if responseSiteEngg else []
+                # snapData = fetchData['SnapData']
+                snapData = {}
+                for snap in site_snap_array:
+                    snap_key = snap.get("fieldName", "")
+                    snapData[snap_key] = fetchData['SnapData'][snap_key]
                 result = {}
                 for section, data in snapData.items():
                     result[section] = []

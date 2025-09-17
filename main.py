@@ -28,6 +28,7 @@ from blueprint_routes.gpTrackingScheduler import gpTrackingScheduler_blueprint a
 from blueprint_routes.gpTrackingScheduler import get_gpTracking as get_gpTracking
 from blueprint_routes.gpTrackingScheduler import getcccdc as getcccdc
 from blueprint_routes.ptw_blueprint import ptw_blueprint as ptw_blueprint
+from blueprint_routes.airtel_blueprint import airtel_blueprint as airtel_blueprint
 
 
 
@@ -57,6 +58,7 @@ app.register_blueprint(sample_blueprint)
 app.register_blueprint(gpTracking_blueprint)
 app.register_blueprint(gpTrackingScheduler_blueprint)
 app.register_blueprint(ptw_blueprint)
+app.register_blueprint(airtel_blueprint)
 
 
 @app.route('/',methods=['GET'])

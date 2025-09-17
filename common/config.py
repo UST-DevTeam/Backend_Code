@@ -1058,28 +1058,27 @@ def generate_pdf_from_dict(data_list, output_path, title=None):
         if attachment_path:
             try:
                 img_path = os.path.join(os.getcwd(), attachment_path)
-                from reportlab.platypus import Image
+
                 if img_path.lower().endswith('.pdf'):
-                    from PyPDF2 import PdfFileReader
+                    # Read the PDF
+                    pdf_reader = PdfReader(open(img_path, 'rb'))
+                    if len(pdf_reader.pages) > 0:
+                        # Convert first page to PNG
+                        pages = convert_from_path(img_path, first_page=1, last_page=1)
+                        if pages:
+                            temp_img_path = os.path.join(os.getcwd(), 'temp_img.png')
+                            pages[0].save(temp_img_path, 'PNG')
 
-                    pdf_reader = PdfFileReader(open(img_path, 'rb'))
-                    if pdf_reader.numPages > 0:
-                        from reportlab.pdfgen import canvas
-
-                        first_page = pdf_reader.getPage(0)
-                        pdf_writer = open(os.path.join(os.getcwd(), 'temp_img.png'), 'wb')
-                        pdf_writer.write(first_page)
-                        pdf_writer.close()
-
-                        image_path = os.path.join(os.getcwd(), 'temp_img.png')
-                        img = Image(image_path, width=200, height=200)
-                        elements.append(img)
+                            img = Image(temp_img_path, width=200, height=200)
+                            elements.append(img)
+                        else:
+                            elements.append(Paragraph("No pages found in PDF", styles['Normal']))
                 else:
                     img = Image(img_path, width=200, height=200)
                     elements.append(img)
+
             except Exception as e:
                 elements.append(Paragraph(f"Error loading image: {str(e)}", styles['Normal']))
-        
         if idx < len(data_list) - 1:
             elements.append(PageBreak())
     

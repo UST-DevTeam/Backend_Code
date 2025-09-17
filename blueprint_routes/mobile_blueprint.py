@@ -7109,7 +7109,72 @@ def mobilecloseMilestone(current_user, id=None):
     resp = {}
     tkn = False
 
-    if "CC_" in closedData and closedData['CC_'] == "Forms & Checklist":
+    arra = [
+        {
+            '$match': {
+                '_id': ObjectId(id)
+            }
+        }, {
+            '$project': {
+                'Name': 1, 
+                'SubProjectId': {
+                    '$toObjectId': '$SubProjectId'
+                }, 
+                'customerId': {
+                    '$toObjectId': '$customerId'
+                }, 
+                '_id': 0
+            }
+        }, {
+            '$lookup': {
+                'from': 'projectType', 
+                'localField': 'SubProjectId', 
+                'foreignField': '_id', 
+                'pipeline': [
+                    {
+                        '$match': {
+                            'subProject': {
+                                '$ne': '5G RRU SWAP'
+                            }
+                        }
+                    }
+                ], 
+                'as': 'presult'
+            }
+        }, {
+            '$lookup': {
+                'from': 'customer', 
+                'localField': 'customerId', 
+                'foreignField': '_id', 
+                'as': 'cresult'
+            }
+        }, {
+            '$addFields': {
+                'projectTypeName': {
+                    '$arrayElemAt': [
+                        '$presult.projectType', 0
+                    ]
+                }, 
+                'CustomerName': {
+                    '$arrayElemAt': [
+                        '$cresult.customerName', 0
+                    ]
+                }
+            }
+        }, {
+            '$match': {
+                'Name': 'Physical AT', 
+                'CustomerName': 'AIRTEL', 
+                'projectTypeName': {
+                    '$in': [
+                        'ULS', 'MACRO', 'RELOCATION'
+                    ]
+                }
+            }
+        }
+    ]
+    res = cmo.finding_aggregate("milestone",arra)['data']
+    if len(res)>0:
         arra = [
             {
                 '$match': {
@@ -7151,11 +7216,11 @@ def mobilecloseMilestone(current_user, id=None):
         response = cmo.finding_aggregate("milestone",arra)['data']
         if response:
             response = response[0]
-            closedData['Checklist'] == "Yes"
-            closedData['siteuid'] == response['siteuid']
-            closedData['mName'] == response['mName']
-            closedData['projectTypeName'] == response['projectTypeName']
-            closedData['subProjectTypeName'] == response['subProjectTypeName']
+            closedData['Checklist'] = "Yes"
+            closedData['siteuid'] = response['siteuid']
+            closedData['mName'] = response['mName']
+            closedData['projectTypeName'] = response['projectTypeName']
+            closedData['subProjectTypeName'] = response['subProjectTypeName']
     
     
     globalSaverId=None

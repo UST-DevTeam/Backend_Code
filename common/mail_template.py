@@ -82,6 +82,73 @@ PMO Team
 
 *This is a computer-generated acknowledgement email by PMO. Please do not reply on this email."""
 
+def approver_mail(approverName,userName,userCode,Id,totalAmount,type,approver,approveAmount,l1Name,l1Code):
+    return f"""Dear {approverName},
+
+<br>
+<br>
+The {type} of {totalAmount} amount is {approver}  with following details :
+<br>
+<br>
+User Name - {userName}
+<br>
+User Code - {userCode}
+<br>
+{type} ID - {Id}
+<br>
+Approved Amount - {approveAmount}
+<br>
+L1 Approver Name - {l1Name}
+<br>
+L1 Approver Code - {l1Code}
+<br>
+<br>
+Please login to the portal for further details.
+<br>
+<br>
+Regards,
+<br>
+PMO Team
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+*This is a computer-generated acknowledgement email by PMO. Please do not reply on this email."""
+
+def expense_mail(userName,userCode,approverName,ExpenseNo,amount):
+    return f"""Dear {approverName},
+
+<br>
+<br>
+The Expense of {amount} amount is submitted by user with following details :
+<br>
+Name - {userName}
+<br>
+Code - {userCode}
+<br>
+Expense ID - {ExpenseNo}
+<br>
+Claim Amount - {amount}
+<br>
+<br>
+Please login to the portal for further details.
+<br>
+<br>
+Regards,
+<br>
+PMO Team
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+*This is a computer-generated acknowledgement email by PMO. Please do not reply on this email."""
+
 
 def forgetPassword_mail(empName,empCode,password):
     return f"""Dear {empName},
